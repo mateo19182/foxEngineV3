@@ -1,11 +1,12 @@
 import sys
 from pymongo import MongoClient
-import bcrypt
+import requests
 
 # MongoDB connection settings
 MONGO_URI = "mongodb://root:example@localhost:27017"
 DATABASE_NAME = "my_database"
 COLLECTION_NAME = "users"
+URL = "http://localhost:8000/"
 
 def get_db_connection():
     """Connect to MongoDB and return the database and collection."""
@@ -27,20 +28,15 @@ def list_users():
 
 def add_user(username, password):
     """Add a new user to the database."""
-    collection = get_db_connection()
-    if collection.find_one({"username": username}):
-        print(f"Error: User '{username}' already exists.")
-        return
-    
-    # Hash the password
-    hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-    
-    collection.insert_one({
-        "username": username,
-        "password": hashed_password.decode("utf-8"),  # Store the hashed password
-        "role": "user"  # Default role is 'user'
-    })
-    print(f"User '{username}' added successfully.")
+    params = {"username": username, "password": password, "secret_key": "shh"}
+    try:
+        response = requests.post(URL + "register", params=params)
+        if response.status_code == 200:
+            print(f"User '{username}' added successfully.")
+        else:
+            print(f"Error: Could not add user '{username}'. Status code: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        print(f"Error: Could not add user '{username}'. {e}")
 
 def remove_user(username):
     """Remove a user from the database."""

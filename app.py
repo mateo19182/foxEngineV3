@@ -3,6 +3,7 @@ import os
 import io
 import pandas as pd
 from fastapi import FastAPI, Request, HTTPException, Depends, status
+from dotenv import load_dotenv
 from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,8 +11,12 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from typing import Optional
+import bcrypt
+import secrets
 
 app = FastAPI()
+load_dotenv()  # Load environment variables from .env file
+secret_key = os.getenv("SECRET_KEY")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -41,12 +46,81 @@ users_collection = db["users"]
 # Simple session storage (in production, use proper session management)
 sessions = {}
 
-# Authentication middleware
+security = HTTPBasic()
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+def get_password_hash(password: str) -> str:
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+
+def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
+    user = users_collection.find_one({"username": credentials.username})
+    
+    if not user or not verify_password(credentials.password, user['password']):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
+
+@app.post("/login")
+async def login(request: Request):
+    form_data = await request.form()
+    username = form_data.get("username")
+    password = form_data.get("password")
+    
+    user = users_collection.find_one({"username": username})
+    
+    if not user or not verify_password(password, user['password']):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Create session
+    session_id = secrets.token_hex(16)  # More secure than os.urandom
+    sessions[session_id] = username
+    
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(
+        key="session_id",
+        value=session_id,
+        httponly=True,  # Prevents JavaScript access
+        secure=False,    # Only sends over HTTPS todo change when real!!!!
+        samesite="lax"  # Prevents CSRF
+    )
+    return response
+
 async def get_current_user(request: Request):
     session_id = request.cookies.get("session_id")
     if not session_id or session_id not in sessions:
         return None
-    return sessions[session_id]
+    
+    # Validate that the user still exists
+    username = sessions[session_id]
+    user = users_collection.find_one({"username": username})
+    if not user:
+        # Clear invalid session
+        sessions.pop(session_id, None)
+        return None
+        
+    return username
+
+# Update the logout endpoint for better security
+@app.get("/logout")
+async def logout(request: Request):
+    session_id = request.cookies.get("session_id")
+    if session_id in sessions:
+        del sessions[session_id]
+    
+    response = RedirectResponse(url="/login")
+    response.delete_cookie(
+        key="session_id",
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    return response
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -91,15 +165,6 @@ async def login(request: Request):
     response.set_cookie(key="session_id", value=session_id)
     return response
 
-@app.get("/logout")
-async def logout(request: Request):
-    session_id = request.cookies.get("session_id")
-    if session_id in sessions:
-        del sessions[session_id]
-    response = RedirectResponse(url="/login")
-    response.delete_cookie("session_id")
-    return response
-
 # Add this to all protected routes
 async def protected_route(request: Request):
     user = await get_current_user(request)
@@ -128,13 +193,16 @@ async def upload_csv(request: Request, user: str = Depends(protected_route)):
     return {"inserted_count": len(res.inserted_ids)}
 
 @app.post("/register")
-async def register_user(username: str, password: str):
+async def register_user(request: Request, secret_key: str, username: str, password: str):
+    if secret_key != os.environ.get("SECRET_KEY"):
+        raise HTTPException(status_code=403, detail="Invalid secret key")
+    
     if users_collection.find_one({"username": username}):
         raise HTTPException(status_code=400, detail="Username already exists")
     
     users_collection.insert_one({
         "username": username,
-        "password": password  # In production, use password hashing!
+        "password": get_password_hash(password) 
     })
     return {"message": "User created"}
 
@@ -218,3 +286,8 @@ def count_records():
     """Return the total number of records in the collection."""
     total = collection.count_documents({})
     return {"total_records": total}
+
+# Example protected route
+@app.get("/protected")
+async def protected_route(username: str = Depends(authenticate_user)):
+    return {"message": f"Hello {username}"}

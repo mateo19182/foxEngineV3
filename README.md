@@ -3,11 +3,15 @@
 ## Todo
 
 - mongodb cluster
-- hash passwords lol
 - good parsing for csv / json
 - actually manage duplicates...
 - copy other cool stuff from v1 and v2!
-- llm integration lol
+- llm integration xd
 - try lots of records
+- [fuzzy search](https://www.mongodb.com/resources/basics/fuzzy-match)
 
-curl -X POST "http://localhost:8000/register?username=admin&password=secret"
+```python
+python user_manager.py list
+python user_manager.py add <username> <password>
+python user_manager.py remove <username>
+```
