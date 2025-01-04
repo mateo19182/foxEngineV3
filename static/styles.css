@@ -1,0 +1,217 @@
+/* Base Styles */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    transition: background 0.3s, color 0.3s;
+  }
+  
+  /* Light Mode */
+  body.light-mode {
+    background: #f0f0f0;
+    color: #222;
+  }
+  
+  body.light-mode h1,
+  body.light-mode h2,
+  body.light-mode h3 {
+    color: #000;
+  }
+  
+  body.light-mode .modal {
+    background: #fff;
+    border-color: #ccc;
+    color: #222;
+  }
+  
+  body.light-mode th,
+  body.light-mode td,
+  body.light-mode table {
+    border-color: #ccc;
+  }
+  
+  /* Dark Mode */
+  body.dark-mode {
+    background: #121212;
+    color: #e0e0e0;
+  }
+  
+  body.dark-mode h1,
+  body.dark-mode h2,
+  body.dark-mode h3 {
+    color: #fff;
+  }
+  
+  body.dark-mode .modal {
+    background: #1e1e1e;
+    border-color: #333;
+    color: #e0e0e0;
+  }
+  
+  body.dark-mode th,
+  body.dark-mode td,
+  body.dark-mode table {
+    border-color: #444;
+  }
+  
+  /* Container */
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  header nav a {
+    color: inherit;
+    margin-left: 1rem;
+    text-decoration: none;
+    font-size: 1.2rem;
+  }
+  
+  header nav a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Buttons */
+  .btn,
+  .icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    margin: 0.3rem;
+    transition: transform 0.2s, color 0.2s;
+  }
+  
+  .icon-btn {
+    font-size: 1.5rem; /* Increased icon size */
+    color: inherit;
+  }
+  
+  .icon-btn:hover {
+    transform: scale(1.2);
+    color: #ff9800; /* Highlight color on hover */
+  }
+  
+  /* Forms */
+  input[type="text"],
+  input[type="file"],
+  select {
+    padding: 0.5rem;
+    margin: 0.3rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: inherit;
+    color: inherit;
+  }
+  
+  input[type="text"]::placeholder {
+    color: #aaa;
+  }
+  
+  /* Sections */
+  .section {
+    margin-bottom: 2rem;
+  }
+  
+  /* Table */
+  .table-wrapper {
+    overflow-x: auto;
+    margin-top: 1rem;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th,
+  td {
+    border: 1px solid #888;
+    padding: 0.8rem;
+    text-align: left;
+  }
+  
+  th {
+    background: #555;
+    color: #fff;
+  }
+  
+  td {
+    background: #2c2c2c;
+    color: #ddd;
+  }
+  
+  /* Modal Overlay */
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+  }
+  
+  /* Modal Content */
+  .modal {
+    background: #333;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+  }
+  
+  .modal h3 {
+    margin-top: 0;
+  }
+  
+  /* Modal Actions */
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+  
+  /* Search Fields */
+  .search-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .search-row input {
+    flex: 1 1 45%;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .icon-btn {
+      font-size: 1.3rem;
+    }
+  
+    th,
+    td {
+      padding: 0.6rem;
+    }
+  
+    .container {
+      padding: 1rem;
+    }
+
+    #totalCount {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        /* Additional styling as needed */
+      }
+}
+  

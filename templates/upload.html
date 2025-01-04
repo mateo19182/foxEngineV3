@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Upload CSV</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <!-- Font Awesome CDN for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      referrerpolicy="no-referrer"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  </head>
+  <body class="light-mode">
+    <div class="container">
+      <header>
+        <!-- Light/Dark Toggle Button -->
+        <button id="themeToggle" class="icon-btn" title="Toggle Light/Dark">
+          <i class="fas fa-sun"></i>
+        </button>
+        <nav>
+          <a href="/" title="Home"><i class="fas fa-home"></i></a>
+          <a href="/upload" title="Upload Page"><i class="fas fa-upload"></i></a>
+        </nav>
+      </header>
+
+      <h1>Upload</h1>
+
+      <!-- CSV Selection Section -->
+      <section class="section">
+        <input type="file" id="inputCSV" accept=".csv" />
+        <br/>
+        <label for="delimiterInput">Delimiter:</label>
+        <input type="text" id="delimiterInput" placeholder="e.g. , or ; or \t" style="width: 50px;" />
+        <button class="icon-btn" onclick="previewCSV()" title="Preview CSV">
+          <i class="fas fa-eye"></i>
+        </button>
+      </section>
+
+      <hr/>
+
+      <!-- Preview Table and Column Rename -->
+      <section class="section">
+        <h3>Preview & Rename Columns</h3>
+        <div class="table-wrapper">
+          <table id="previewTable">
+            <thead id="previewHead"></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+        <button class="icon-btn" onclick="finalizeUpload()" title="Upload to Database">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </button>
+      </section>
+    </div>
+
+    <script src="/static/scripts.js"></script>
+  </body>
+</html>

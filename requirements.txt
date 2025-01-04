@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pymongo
+pandas
+Jinja2
+python-multipart
+bcrypt
+python-jose[cryptography]
