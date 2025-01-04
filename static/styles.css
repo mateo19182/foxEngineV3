@@ -213,5 +213,35 @@ body {
         margin-bottom: 1rem;
         /* Additional styling as needed */
       }
+      /* Add these to your existing styles.css */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.btn {
+  background: #007bff;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #0056b3;
+}
+
+.error-message {
+  color: #dc3545;
+  margin-bottom: 1rem;
+}
 }
   

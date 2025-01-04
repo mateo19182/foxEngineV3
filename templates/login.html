@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="light-mode">
+    <div class="container">
+        <h1>Login</h1>
+        <form method="post" action="/login">
+            <div class="form-group">
+                <input type="text" name="username" value="Username" required class="form-control" onfocus="if(this.value=='Username') this.value='';" onblur="if(this.value=='') this.value='Username';" />
+            </div>
+            <div class="form-group">
+                <input type="text" name="password"  value="Password" required class="form-control" onfocus="if(this.value=='Password') this.value='';" onblur="if(this.value=='') this.value='Password';" />
+            </div>
+            <button type="submit" class="btn">
+                <i class="fas fa-sign-in-alt"></i>
+            </button>
+        </form>
+    </div>
+</body>
+</html>
