@@ -4,6 +4,6 @@ pymongo
 pandas
 Jinja2
 python-multipart
-dotenv
+python-dotenv 
 bcrypt
 passlib
