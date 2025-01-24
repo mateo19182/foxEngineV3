@@ -190,7 +190,9 @@ document.addEventListener("DOMContentLoaded", () => {
   async function doSearch() {
     const params = collectSearchParams();
     try {
-      const res = await fetch(`/search?params=${params}`);
+      // Include skip/limit in the request for pagination
+      const url = `/search?params=${encodeURIComponent(params)}&skip=0&limit=50`;
+      const res = await fetch(url);
       const data = await res.json();
       renderTable(data);
       const info = document.getElementById("info");

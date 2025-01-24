@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pymongo import MongoClient
+from pymongo.server_api import ServerApi
 from bson.objectid import ObjectId
 from typing import Optional
 import bcrypt
@@ -38,7 +39,7 @@ if MONGO_USER:
 else:
     MONGO_URI = f"mongodb://{MONGO_HOST}:27017"
 
-client = MongoClient(MONGO_URI)
+client = MongoClient(MONGO_URI, server_api=ServerApi("1"))
 db = client["my_database"]
 collection = db["records"]
 users_collection = db["users"]
@@ -233,25 +234,49 @@ async def update_record(record_id: str, request: Request, current_user: dict = D
     return {"updated": True}
 
 @app.get("/search")
-def search_records(params: str = "", current_user: dict = Depends(get_current_user)):
-    if not params:
+def search_records(
+    params: str = "",
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        if not params:
+            # Return all records if no search parameters are provided
+            data = []
+            for doc in collection.find().skip(skip).limit(limit):
+                doc["_id"] = str(doc["_id"])
+                data.append(doc)
+            return data
+
+        # Parse the query parameters
+        query_dict = {}
+        for p in params.split("&"):
+            if "=" not in p:
+                continue
+            k, v = p.split("=", 1)
+            k = k.strip()
+            v = v.strip()
+            
+            # Check if the value is a regex pattern
+            if v.startswith("/") and v.endswith("/"):
+                # Extract the regex pattern (remove the leading and trailing slashes)
+                regex_pattern = v[1:-1]
+                query_dict[k] = {"$regex": regex_pattern, "$options": "i"}  # Case-insensitive regex
+            else:
+                # Treat it as a literal search (allow partial matches)
+                query_dict[k] = {"$regex": v, "$options": "i"}  # Partial match (case-insensitive)
+
+        print(f"Query Dict: {query_dict}")  # Debugging: Print the query dictionary
+
+        # Execute the query
         data = []
-        for doc in collection.find().limit(200):
+        for doc in collection.find(query_dict).skip(skip).limit(limit):
             doc["_id"] = str(doc["_id"])
             data.append(doc)
         return data
-
-    query_dict = {}
-    for p in params.split("&"):
-        if "=" not in p:
-            continue
-        k, v = p.split("=", 1)
-        query_dict[k.strip()] = v.strip()
-    data = []
-    for doc in collection.find(query_dict).limit(200):
-        doc["_id"] = str(doc["_id"])
-        data.append(doc)
-    return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/download-csv")
 def download_csv(params: str = "", current_user: dict = Depends(get_current_user)):
