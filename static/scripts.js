@@ -184,6 +184,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Fetch and display the total count
   fetchTotalCount();
+
+  // Fetch and display logs
+  async function fetchLogs() {
+    try {
+        const res = await fetch('/logs');
+        const logs = await res.json();
+        const logsList = document.getElementById("logsList");
+        logsList.innerHTML = ""; // Clear existing logs
+
+        logs.forEach(log => {
+            const listItem = document.createElement("li");
+            listItem.classList.add("log-entry");
+
+            // Create a structured display for each log entry
+            listItem.innerHTML = `
+                <strong>Timestamp:</strong> ${new Date(log.timestamp).toLocaleString()}<br/>
+                <strong>Endpoint:</strong> ${log.endpoint}<br/>
+                <strong>User:</strong> ${log.user}<br/>
+                <strong>Status Code:</strong> ${log.status_code}<br/>
+                <strong>Error:</strong> ${log.error || 'None'}<br/>
+                <strong>Additional Info:</strong> ${log.additional_info || 'None'}<br/>
+                <hr/>
+            `;
+            logsList.appendChild(listItem);
+        });
+    } catch (err) {
+        console.error('Error fetching logs:', err);
+    }
+  }
+
+  // Call fetchLogs to populate the side panel
+  fetchLogs();
 });    
   
   // Search Page Functions (Home/Search)
