@@ -6,4 +6,5 @@ Jinja2
 python-multipart
 python-dotenv 
 bcrypt
+python-jose[cryptography]
 passlib

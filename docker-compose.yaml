@@ -15,12 +15,16 @@ services:
     container_name: web
     ports:
       - "8000:8000"
+    volumes:
+      # Add volume for development hot-reload
+      - .:/app
     depends_on:
       - mongo
     environment:
       MONGO_HOST: mongo
       MONGO_USER: root
       MONGO_PASS: example
+      SECRET_KEY: "your-secret-key-here"  # Change this in production!
 
 volumes:
   mongo_data:

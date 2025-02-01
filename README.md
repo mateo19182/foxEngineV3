@@ -13,6 +13,7 @@
 - copy other cool stuff from v1 and v2!
 - try lots of records
 - improve ui
+- optimize docker
 - personlize export
 - fuzzy search and/or regex
 - add cluster to production

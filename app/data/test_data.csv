@@ -1,0 +1,4 @@
+source,username,email,age,city,tags,active
+csv_source_1,csv_user_1,csv1@example.com,28,Boston,"test,sample",true
+csv_source_2,csv_user_2,csv2@example.com,33,Seattle,"demo,test",false
+csv_source_3,csv_user_3,csv3@example.com,40,Portland,"sample,demo",true 

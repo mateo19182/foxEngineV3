@@ -1,0 +1,31 @@
+{
+    "records": [
+        {
+            "source": "test_source_1",
+            "username": "test_user_1",
+            "email": "test1@example.com",
+            "age": 25,
+            "city": "New York",
+            "tags": ["test", "sample"],
+            "active": true
+        },
+        {
+            "source": "test_source_2",
+            "username": "test_user_2",
+            "email": "test2@example.com",
+            "age": 30,
+            "city": "Los Angeles",
+            "tags": ["test", "demo"],
+            "active": false
+        },
+        {
+            "source": "another_source",
+            "username": "test_user_3",
+            "email": "test3@example.com",
+            "age": 35,
+            "city": "Chicago",
+            "tags": ["sample", "demo"],
+            "active": true
+        }
+    ]
+} 

@@ -1,3 +1,4 @@
 env
 .env
 keyfile
+__pycache__
