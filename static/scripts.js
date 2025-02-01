@@ -190,8 +190,8 @@ document.addEventListener("DOMContentLoaded", () => {
   async function doSearch() {
     const params = collectSearchParams();
     try {
-      // Include skip/limit in the request for pagination
-      const url = `/search?params=${encodeURIComponent(params)}&skip=0&limit=50`;
+      // Construct the URL with the correct query parameter
+      const url = `/search?query=${encodeURIComponent(params)}&skip=0&limit=50`;
       const res = await fetch(url);
       const data = await res.json();
       renderTable(data);
@@ -229,10 +229,11 @@ async function doDownload() {
         const fieldName = nameEl.value.trim();
         const fieldValue = valEl.value.trim();
         if (fieldName && fieldValue) {
-          arr.push(`${encodeURIComponent(fieldName)}=${encodeURIComponent(fieldValue)}`);
+          arr.push(`${encodeURIComponent(fieldName)}:${encodeURIComponent(fieldValue)}`);
         }
       }
     });
+    console.log(arr);
     return arr.join("&");
   }
   

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, Request, HTTPException, Depends, Path, Query
 from datetime import datetime
 import pymongo
 from bson.objectid import ObjectId
@@ -7,61 +7,107 @@ import io
 from fastapi.responses import StreamingResponse
 from ..database.client import collection
 from ..auth.jwt import get_current_user
+from ..utils.logging import logs_collection, log_api_call
+from typing import Optional, List
+import logging
 
 router = APIRouter()
 
-@router.post("/upload-csv")
-async def upload_csv(request: Request):
-    data = await request.json()
-    rows = data.get("rows", [])
-    columns = data.get("columns", [])
-    if not rows or not columns:
-        raise HTTPException(status_code=400, detail="No data provided")
+# Set up logging
+logger = logging.getLogger("uvicorn.error")
 
-    # Verify required fields are present
-    if "source" not in columns or "username" not in columns:
-        raise HTTPException(
-            status_code=400, 
-            detail="CSV must contain 'source' and 'username' columns"
-        )
-
-    current_time = datetime.utcnow()
-    records = []
-    for r in rows:
-        rec = {}
-        for i, col in enumerate(columns):
-            if i < len(r):
-                rec[col] = r[i]
-        
-        # Add required fields
-        rec["createdAt"] = current_time
-        rec["lastModified"] = current_time
-        records.append(rec)
-
+@router.post("/upload-csv", summary="Upload CSV data", 
+    description="Upload CSV data with required 'source' and 'username' columns")
+async def upload_csv(request: Request, current_user: str = Depends(get_current_user)):
     try:
-        res = collection.insert_many(records, ordered=False)
-        return {"inserted_count": len(res.inserted_ids)}
-    except pymongo.errors.BulkWriteError as e:
-        # Handle duplicate key errors
-        return {
-            "inserted_count": e.details['nInserted'],
-            "duplicate_count": len(e.details['writeErrors'])
-        }
+        data = await request.json()
+        rows = data.get("rows", [])
+        columns = data.get("columns", [])
+        if not rows or not columns:
+            raise HTTPException(status_code=400, detail="No data provided")
 
-@router.get("/list")
-async def list_records(skip: int = 0, limit: int = 50, current_user: str = Depends(get_current_user)):
-    data = []
-    for doc in collection.find().skip(skip).limit(limit):
-        doc["_id"] = str(doc["_id"])
-        data.append(doc)
-    return data
+        # Verify required fields are present
+        if "source" not in columns or "username" not in columns:
+            raise HTTPException(
+                status_code=400, 
+                detail="CSV must contain 'source' and 'username' columns"
+            )
 
-@router.delete("/record/{record_id}")
-async def delete_record(record_id: str, current_user: str = Depends(get_current_user)):
-    res = collection.delete_one({"_id": ObjectId(record_id)})
-    if res.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Not found")
-    return {"deleted": True}
+        current_time = datetime.utcnow()
+        records = []
+        for r in rows:
+            rec = {}
+            for i, col in enumerate(columns):
+                if i < len(r):
+                    # Strip whitespace from string values
+                    value = r[i]
+                    if isinstance(value, str):
+                        value = value.strip()
+                    rec[col] = value
+            
+            # Add required fields
+            rec["createdAt"] = current_time
+            rec["lastModified"] = current_time
+            records.append(rec)
+
+        try:
+            res = collection.insert_many(records, ordered=False)
+            inserted_count = len(res.inserted_ids)
+            log_api_call("/upload-csv", "POST", current_user, 
+                        additional_info=f"Records inserted: {inserted_count}")
+            return {"inserted_count": inserted_count}
+        except pymongo.errors.BulkWriteError as bwe:
+            # Handle partial success case
+            inserted_count = bwe.details.get('nInserted', 0)
+            duplicates = len([err for err in bwe.details.get('writeErrors', []) 
+                            if err.get('code') == 11000])
+            log_api_call("/upload-csv", "POST", current_user, 
+                        status_code=207, 
+                        error="Partial success",
+                        additional_info=f"Records inserted: {inserted_count}, Duplicates: {duplicates}")
+            return {
+                "inserted_count": inserted_count,
+                "duplicate_count": duplicates,
+                "message": "Some records were duplicates and were skipped"
+            }
+    except Exception as e:
+        log_api_call("/upload-csv", "POST", current_user, 500, str(e))
+        raise
+
+@router.get("/list", summary="List records", 
+    description="Get paginated list of records")
+async def list_records(
+    skip: int = Query(0, description="Number of records to skip"),
+    limit: int = Query(50, description="Number of records to return"),
+    current_user: str = Depends(get_current_user)
+):
+    try:
+        data = []
+        for doc in collection.find().skip(skip).limit(limit):
+            doc["_id"] = str(doc["_id"])
+            data.append(doc)
+        log_api_call("/list", "GET", current_user)
+        return data
+    except Exception as e:
+        log_api_call("/list", "GET", current_user, 500, str(e))
+        raise
+
+@router.delete("/record/{record_id}", summary="Delete record",
+    description="Delete a record by ID")
+async def delete_record(
+    record_id: str = Path(..., description="The ID of the record to delete"),
+    current_user: str = Depends(get_current_user)
+):
+    try:
+        res = collection.delete_one({"_id": ObjectId(record_id)})
+        if res.deleted_count == 0:
+            log_api_call(f"/record/{record_id}", "DELETE", current_user, 404)
+            raise HTTPException(status_code=404, detail="Not found")
+        log_api_call(f"/record/{record_id}", "DELETE", current_user)
+        return {"deleted": True}
+    except Exception as e:
+        log_api_call(f"/record/{record_id}", "DELETE", current_user, 500, str(e))
+        raise
 
 @router.put("/record/{record_id}")
 async def update_record(record_id: str, request: Request, current_user: str = Depends(get_current_user)):
@@ -85,8 +131,8 @@ async def update_record(record_id: str, request: Request, current_user: str = De
 @router.get("/search")
 async def search_records(
     query: str = "",
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(0, description="Number of records to skip"),
+    limit: int = Query(50, description="Number of records to return"),
     current_user: str = Depends(get_current_user)
 ):
     try:
@@ -139,9 +185,9 @@ async def search_records(
                 else:
                     mongo_query[field] = {'$regex': value, '$options': 'i'}
 
-        print(f"MongoDB Query: {mongo_query}")  # Debug print
+        logger.info(f"MongoDB Query: {mongo_query}")  # Use logger instead of print
 
-        # Execute query
+        # Execute query with pagination
         data = []
         for doc in collection.find(mongo_query).skip(skip).limit(limit):
             doc["_id"] = str(doc["_id"])
@@ -149,6 +195,7 @@ async def search_records(
         return data
 
     except Exception as e:
+        logger.error(f"Error in search_records: {str(e)}")  # Log the error
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/download-csv")
@@ -184,3 +231,21 @@ async def count_records():
     """Return the total number of records in the collection."""
     total = collection.count_documents({})
     return {"total_records": total}
+
+@router.get("/logs")
+async def get_logs(
+    limit: int = 100,
+    status_code: Optional[int] = None,
+    current_user: str = Depends(get_current_user)
+):
+    """Get recent API logs."""
+    query = {}
+    if status_code:
+        query["status_code"] = status_code
+    
+    logs = []
+    for log in logs_collection.find(query).sort("timestamp", -1).limit(limit):
+        log["_id"] = str(log["_id"])
+        log["timestamp"] = log["timestamp"].isoformat()
+        logs.append(log)
+    return logs
