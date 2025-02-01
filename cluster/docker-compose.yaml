@@ -26,31 +26,31 @@ services:
     volumes:
       - 'shard0_data:/bitnami'
 
-  mongodb-shard1:
-    image: docker.io/bitnami/mongodb-sharded:8.0
-    environment:
-      - MONGODB_ADVERTISED_HOSTNAME=mongodb-shard1
-      - MONGODB_SHARDING_MODE=shardsvr
-      - MONGODB_MONGOS_HOST=mongodb-sharded
-      - MONGODB_ROOT_PASSWORD=password123
-      - MONGODB_REPLICA_SET_MODE=primary
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
-      - MONGODB_REPLICA_SET_NAME=shard1
-    volumes:
-      - 'shard1_data:/bitnami'
+  # mongodb-shard1:
+  #   image: docker.io/bitnami/mongodb-sharded:8.0
+  #   environment:
+  #     - MONGODB_ADVERTISED_HOSTNAME=mongodb-shard1
+  #     - MONGODB_SHARDING_MODE=shardsvr
+  #     - MONGODB_MONGOS_HOST=mongodb-sharded
+  #     - MONGODB_ROOT_PASSWORD=password123
+  #     - MONGODB_REPLICA_SET_MODE=primary
+  #     - MONGODB_REPLICA_SET_KEY=replicasetkey123
+  #     - MONGODB_REPLICA_SET_NAME=shard1
+  #   volumes:
+  #     - 'shard1_data:/bitnami'
 
-  mongodb-shard2:
-    image: docker.io/bitnami/mongodb-sharded:8.0
-    environment:
-      - MONGODB_ADVERTISED_HOSTNAME=mongodb-shard2
-      - MONGODB_SHARDING_MODE=shardsvr
-      - MONGODB_MONGOS_HOST=mongodb-sharded
-      - MONGODB_ROOT_PASSWORD=password123
-      - MONGODB_REPLICA_SET_MODE=primary
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
-      - MONGODB_REPLICA_SET_NAME=shard2
-    volumes:
-      - 'shard2_data:/bitnami'
+  # mongodb-shard2:
+  #   image: docker.io/bitnami/mongodb-sharded:8.0
+  #   environment:
+  #     - MONGODB_ADVERTISED_HOSTNAME=mongodb-shard2
+  #     - MONGODB_SHARDING_MODE=shardsvr
+  #     - MONGODB_MONGOS_HOST=mongodb-sharded
+  #     - MONGODB_ROOT_PASSWORD=password123
+  #     - MONGODB_REPLICA_SET_MODE=primary
+  #     - MONGODB_REPLICA_SET_KEY=replicasetkey123
+  #     - MONGODB_REPLICA_SET_NAME=shard2
+  #   volumes:
+  #     - 'shard2_data:/bitnami'
 
   mongodb-cfg:
     image: docker.io/bitnami/mongodb-sharded:8.0
@@ -67,9 +67,9 @@ services:
 volumes:
   shard0_data:
     driver: local
-  shard1_data:
-    driver: local
-  shard2_data:
-    driver: local
+  # shard1_data:
+  #   driver: local
+  # shard2_data:
+  #   driver: local
   cfg_data:
     driver: local

@@ -30,7 +30,7 @@ app.add_middleware(
 )
 
 # Basic setup
-MONGO_HOST = os.environ.get("MONGO_HOST", "localhost")
+MONGO_HOST = os.environ.get("MONGO_HOST", "mongo")
 MONGO_USER = os.environ.get("MONGO_USER", "")
 MONGO_PASS = os.environ.get("MONGO_PASS", "")
 
@@ -147,24 +147,6 @@ def login_page():
     """Login page."""
     with open("templates/login.html", "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
-
-@app.post("/login")
-async def login(request: Request):
-    form_data = await request.form()
-    username = form_data.get("username")
-    password = form_data.get("password")
-    
-    user = users_collection.find_one({"username": username, "password": password})
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    # Create session
-    session_id = os.urandom(16).hex()
-    sessions[session_id] = username
-    
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(key="session_id", value=session_id)
-    return response
 
 # Add this to all protected routes
 async def protected_route(request: Request):

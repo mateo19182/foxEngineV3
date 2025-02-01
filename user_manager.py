@@ -26,6 +26,22 @@ def list_users():
     else:
         print("No users found.")
 
+# def add_user(username, password):
+#     """Add a new user directly to the database."""
+#     collection = get_db_connection()
+#     if collection.find_one({"username": username}):
+#         print(f"Error: User '{username}' already exists.")
+#         return
+#     else:
+#         try:
+#             collection.insert_one({
+#                 "username": username,
+#                "password": password  # Note: In production, password should be hashed
+#             })
+#             print(f"User '{username}' added successfully.")
+#         except Exception as e:
+#             print(f"Error: Could not add user '{username}'. {e}")
+
 def add_user(username, password):
     """Add a new user to the database."""
     params = {"username": username, "password": password, "secret_key": "shh"}
@@ -38,6 +54,7 @@ def add_user(username, password):
     except Exception as e:
         print(f"Error: Could not add user '{username}'. {e}")
 
+         
 def remove_user(username):
     """Remove a user from the database."""
     collection = get_db_connection()
@@ -47,6 +64,26 @@ def remove_user(username):
     else:
         print(f"Error: User '{username}' not found.")
 
+def list_databases_and_collections():
+    client = MongoClient(MONGO_URI)
+    db_names = client.list_database_names()
+    for db_name in db_names:
+        print(f"\nDatabase: {db_name}")
+        col_names = client[db_name].list_collection_names()
+        for col_name in col_names:
+            print(f"  Collection: {col_name}")
+
+
+def add_collection(db_name, collection_name):
+    """Add a new collection to a specified database."""
+    try:
+        client = MongoClient(MONGO_URI)
+        db = client[db_name]
+        db.create_collection(collection_name)
+        print(f"Collection '{collection_name}' created successfully in database '{db_name}'.")
+    except Exception as e:
+        print(f"Error creating collection: {e}")
+
 def print_usage():
     """Print usage instructions."""
     print("\nUser Manager CLI Tool")
@@ -54,7 +91,9 @@ def print_usage():
     print("  python user_manager.py list               - List all users")
     print("  python user_manager.py add <username> <password> - Add a new user")
     print("  python user_manager.py remove <username>  - Remove a user")
-
+    print("  python user_manager.py info           - List all databases and collections")
+    print("  python user_manager.py add_collection <db_name> <collection_name> - Add a new collection")
+    
 def main():
     if len(sys.argv) < 2:
         print_usage()
@@ -79,6 +118,16 @@ def main():
         else:
             username = sys.argv[2]
             remove_user(username)
+    elif command == "info":
+        list_databases_and_collections()
+    elif command == "add_collection":
+        if len(sys.argv) != 4:
+            print("Error: Missing database name or collection name.")
+            print_usage()
+        else:
+            db_name = sys.argv[2]
+            collection_name = sys.argv[3]
+            add_collection(db_name, collection_name)
     else:
         print(f"Error: Unknown command '{command}'.")
         print_usage()
