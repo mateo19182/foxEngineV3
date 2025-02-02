@@ -13,11 +13,11 @@ def init_db():
         db.create_collection("records", validator={
             "$jsonSchema": {
                 "bsonType": "object",
-                "required": ["source", "username", "createdAt", "lastModified"],
+                "required": ["username", "createdAt", "lastModified"],
                 "properties": {
                     "source": {
                         "bsonType": "string",
-                        "description": "source must be a string and is required"
+                        "description": "source must be a string if present"
                     },
                     "username": {
                         "bsonType": "string",
@@ -39,6 +39,6 @@ def init_db():
         print(f"Collection might already exist: {e}")
 
     # Create indexes
-    collection.create_index([("source", 1), ("username", 1)], unique=True)
+    collection.create_index([("username", 1)], unique=True)
     collection.create_index([("createdAt", 1)])
     collection.create_index([("lastModified", 1)])

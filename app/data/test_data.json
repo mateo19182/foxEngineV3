@@ -1,31 +1,29 @@
+[
 {
-    "records": [
-        {
-            "source": "test_source_1",
-            "username": "test_user_1",
-            "email": "test1@example.com",
-            "age": 25,
-            "city": "New York",
-            "tags": ["test", "sample"],
-            "active": true
-        },
-        {
-            "source": "test_source_2",
-            "username": "test_user_2",
-            "email": "test2@example.com",
-            "age": 30,
-            "city": "Los Angeles",
-            "tags": ["test", "demo"],
-            "active": false
-        },
-        {
-            "source": "another_source",
-            "username": "test_user_3",
-            "email": "test3@example.com",
-            "age": 35,
-            "city": "Chicago",
-            "tags": ["sample", "demo"],
-            "active": true
-        }
-    ]
-} 
+    "source": "test_source_1_updated",
+    "username": "test_user_1_updated",
+    "email": "test1_updated@example.com",
+    "age": 26,
+    "city": "San Francisco",
+    "tags": ["test_updated", "sample_updated"],
+    "active": false
+},
+{
+    "source": "test_source_2_updated",
+    "username": "test_user_2_updated",
+    "email": "test2_updated@example.com",
+    "age": 31,
+    "city": "Seattle",
+    "tags": ["test_updated", "demo_updated"],
+    "active": true
+},
+{
+    "source": "another_source_updated",
+    "username": "test_user_3_updated",
+    "email": "test3_updated@example.com",
+    "age": 36,
+    "city": "Miami",
+    "tags": ["sample_updated", "demo_updated"],
+    "active": false
+}
+]

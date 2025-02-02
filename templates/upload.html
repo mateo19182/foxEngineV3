@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Upload CSV</title>
+    <title>Upload Data File</title>
     <link rel="stylesheet" href="/static/styles.css" />
     <!-- Font Awesome CDN for Icons -->
     <link
@@ -26,36 +26,56 @@
         </nav>
     </header>
 
-      <h1>Upload</h1>
+      <h1>Upload Data File</h1>
 
-      <!-- CSV Selection Section -->
+      <!-- File selection & progress -->
       <section class="section">
-        <input type="file" id="inputCSV" accept=".csv" />
-        <br/>
-        <label for="delimiterInput">Delimiter:</label>
-        <input type="text" id="delimiterInput" placeholder="e.g. , or ; or \t" style="width: 50px;" />
-        <button class="icon-btn" onclick="previewCSV()" title="Preview CSV">
-          <i class="fas fa-eye"></i>
-        </button>
+        <input type="file" id="fileInput" accept=".csv,.json" />
+        <div id="uploadStatus"></div>
+        <div id="uploadProgress" class="progress-bar" style="display: none;">
+          <div class="progress-fill"></div>
+          <div class="progress-text">0%</div>
+        </div>
       </section>
 
       <hr/>
 
-      <!-- Preview Table and Column Rename -->
+      <!-- Fixed fields section -->
+      <section class="section">
+        <h3>Fixed Field Values</h3>
+        <div id="fixedFields"></div>
+        <button class="icon-btn" id="addFixedFieldBtn" title="Add Fixed Field">
+          <i class="fas fa-plus"></i>
+        </button>
+      </section>
+
+      <!-- Preview table and column renaming/dropping -->
       <section class="section">
         <h3>Preview & Rename Columns</h3>
+        <p class="help-text">
+          Click on a column header to toggle its inclusion (red indicates that the column will be dropped).
+          Edit the column name if needed.
+        </p>
         <div class="table-wrapper">
           <table id="previewTable">
             <thead id="previewHead"></thead>
             <tbody id="previewBody"></tbody>
           </table>
         </div>
-        <button class="icon-btn" onclick="finalizeUpload()" title="Upload to Database">
+        <button class="icon-btn" id="uploadBtn" title="Upload to Database">
           <i class="fas fa-cloud-upload-alt"></i>
         </button>
       </section>
     </div>
 
+<!-- Side Panel for Logs -->
+<aside id="logsPanel" class="side-panel">
+
+  <h2>API Logs</h2>
+  <ul id="logsList"></ul>
+</aside>
+
+    <script src="/static/upload.js"></script>
     <script src="/static/scripts.js"></script>
   </body>
 </html>

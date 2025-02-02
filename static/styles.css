@@ -2,154 +2,153 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    transition: background 0.3s, color 0.3s;
-  }
-  
-  /* Light Mode */
-  body.light-mode {
-    background: #f0f0f0;
-    color: #222;
-  }
-  
-  body.light-mode h1,
-  body.light-mode h2,
-  body.light-mode h3 {
-    color: #000;
-  }
-  
-  body.light-mode .modal {
-    background: #fff;
-    border-color: #ccc;
-    color: #222;
-  }
-  
-  body.light-mode th,
-  body.light-mode td,
-  body.light-mode table {
-    border-color: #ccc;
-  }
-  
-  /* Dark Mode */
-  body.dark-mode {
     background: #121212;
     color: #e0e0e0;
-  }
-  
-  body.dark-mode h1,
-  body.dark-mode h2,
-  body.dark-mode h3 {
+}
+
+h1, h2, h3 {
     color: #fff;
-  }
-  
-  body.dark-mode .modal {
+}
+
+.modal {
     background: #1e1e1e;
     border-color: #333;
     color: #e0e0e0;
-  }
-  
-  body.dark-mode th,
-  body.dark-mode td,
-  body.dark-mode table {
+}
+
+th, td, table {
     border-color: #444;
-  }
-  
-  /* Container */
-  .container {
+}
+
+/* Container */
+.container {
     max-width: 1000px;
-    margin: 0 auto;
     padding: 2rem;
-  }
-  
-  /* Header */
-  header {
+    margin: 0 auto;
+    margin-left: 500px;
+    
+}
+
+/* Side Panel for Logs */
+.side-panel {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    background: #1e1e1e;
+    border-right: 1px solid #444;
+    padding: 1rem;
+    overflow-y: scroll;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+    z-index: 100;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.side-panel::-webkit-scrollbar {
+    display: none;
+}
+
+/* Log entries styling */
+.log-entry {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    border: 1px solid #444;
+}
+
+/* Header */
+header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-  }
-  
-  header nav a {
+}
+
+header nav a {
     color: inherit;
     margin-left: 1rem;
     text-decoration: none;
     font-size: 1.2rem;
-  }
-  
-  header nav a:hover {
+}
+
+header nav a:hover {
     text-decoration: underline;
-  }
-  
-  /* Buttons */
-  .btn,
-  .icon-btn {
+}
+
+/* Buttons */
+.btn,
+.icon-btn {
     background: transparent;
     border: none;
     cursor: pointer;
     margin: 0.3rem;
     transition: transform 0.2s, color 0.2s;
-  }
-  
-  .icon-btn {
+}
+
+.icon-btn {
     font-size: 1.5rem; /* Increased icon size */
     color: inherit;
-  }
-  
-  .icon-btn:hover {
+}
+
+.icon-btn:hover {
     transform: scale(1.2);
     color: #ff9800; /* Highlight color on hover */
-  }
-  
-  /* Forms */
-  input[type="text"],
-  input[type="file"],
-  select {
+}
+
+/* Forms */
+input[type="text"],
+input[type="file"],
+select {
     padding: 0.5rem;
     margin: 0.3rem 0.5rem;
     border: 1px solid #ccc;
     border-radius: 4px;
     background: inherit;
     color: inherit;
-  }
-  
-  input[type="text"]::placeholder {
+}
+
+input[type="text"]::placeholder {
     color: #aaa;
-  }
-  
-  /* Sections */
-  .section {
+}
+
+/* Sections */
+.section {
     margin-bottom: 2rem;
-  }
-  
-  /* Table */
-  .table-wrapper {
+}
+
+/* Table */
+.table-wrapper {
     overflow-x: auto;
     margin-top: 1rem;
-  }
-  
-  table {
+}
+
+table {
     width: 100%;
     border-collapse: collapse;
-  }
-  
-  th,
-  td {
+}
+
+th,
+td {
     border: 1px solid #888;
     padding: 0.8rem;
     text-align: left;
-  }
-  
-  th {
+}
+
+th {
     background: #555;
     color: #fff;
-  }
-  
-  td {
+}
+
+td {
     background: #2c2c2c;
     color: #ddd;
-  }
-  
-  /* Modal Overlay */
-  .overlay {
+}
+
+/* Modal Overlay */
+.overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -159,61 +158,81 @@ body {
     justify-content: center;
     align-items: center;
     background: rgba(0, 0, 0, 0.7);
-  }
-  
-  /* Modal Content */
-  .modal {
+}
+
+/* Modal Content */
+.modal {
     background: #333;
     padding: 2rem;
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
-  }
-  
-  .modal h3 {
+}
+
+.modal h3 {
     margin-top: 0;
-  }
-  
-  /* Modal Actions */
-  .modal-actions {
+}
+
+/* Modal Actions */
+.modal-actions {
     display: flex;
     justify-content: flex-end;
     margin-top: 1rem;
-  }
-  
-  /* Search Fields */
-  .search-row {
+}
+
+/* Search Fields */
+.search-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .search-row input {
+    gap: 10px;
+    margin: 10px 0;
+    align-items: center;
+}
+
+.search-row input {
     flex: 1 1 45%;
-  }
-  
-  /* Responsive Design */
-  @media (max-width: 768px) {
+}
+
+.delete-field {
+    color: #ff4444;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.delete-field:hover {
+    color: #cc0000;
+}
+
+.dark-mode .delete-field {
+    color: #ff6666;
+}
+
+.dark-mode .delete-field:hover {
+    color: #ff4444;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
     .icon-btn {
-      font-size: 1.3rem;
+        font-size: 1.3rem;
     }
-  
+
     th,
     td {
-      padding: 0.6rem;
+        padding: 0.6rem;
     }
-  
+
     .container {
-      padding: 1rem;
+        padding: 1rem;
     }
 
     #totalCount {
         font-size: 1.2rem;
         margin-bottom: 1rem;
         /* Additional styling as needed */
-      }
-      /* Add these to your existing styles.css */
+    }
+    /* Add these to your existing styles.css */
 .form-group {
   margin-bottom: 1rem;
 }
@@ -245,3 +264,176 @@ body {
 }
 }
   
+.upload-container {
+  margin: 20px 0;
+}
+
+.upload-info {
+  margin-top: 10px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  margin: 10px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #4CAF50;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  line-height: 20px;
+  color: #000;
+  mix-blend-mode: difference;
+}
+
+.dark-mode .progress-bar {
+  background-color: #333;
+}
+
+.dark-mode .progress-text {
+  color: #fff;
+}
+
+.fixed-field-row {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+  align-items: center;
+}
+
+.fixed-field-row input {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.column-header {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.checkbox-wrapper label {
+  font-size: 0.8em;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dropped-column {
+  opacity: 0.5;
+  background-color: rgba(255, 0, 0, 0.1);
+}
+
+.dark-mode .dropped-column {
+  background-color: rgba(255, 0, 0, 0.2);
+}
+
+/* Checkbox styling */
+.column-checkbox input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.column-checkbox {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Table styling */
+#previewTable th, #previewTable td {
+  transition: all 0.3s ease;
+}
+.status-message {
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.status-message.error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.status-message.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.status-message.info {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #bbdefb;
+}
+
+.status-message.warning {
+  background-color: #fff3e0;
+  color: #ef6c00;
+  border: 1px solid #ffe0b2;
+}
+
+/* Side Panel for Logs */
+.side-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 300px;
+  background: #1e1e1e;
+  border-right: 1px solid #444;
+  padding: 1rem;
+  overflow-y: scroll;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  z-index: 100;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.side-panel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Log entries styling */
+.log-entry {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  border: 1px solid #444;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1024px) {
+  .side-panel {
+    display: none;
+  }
+  
+  .container {
+    margin-left: auto;
+  }
+}

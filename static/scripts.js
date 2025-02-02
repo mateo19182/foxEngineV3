@@ -12,14 +12,12 @@ document.addEventListener("DOMContentLoaded", () => {
             body.classList.add("dark-mode");
             icon.classList.remove("fa-sun");
             icon.classList.add("fa-moon");
-            // Save to localStorage
             localStorage.setItem('theme', 'dark');
           } else {
             body.classList.remove("dark-mode");
             body.classList.add("light-mode");
             icon.classList.remove("fa-moon");
             icon.classList.add("fa-sun");
-            // Save to localStorage
             localStorage.setItem('theme', 'light');
           }
         });
@@ -35,6 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
         div.innerHTML = `
           <input type="text" placeholder="Field" class="field-name" />
           <input type="text" placeholder="Value" class="field-value" />
+          <button class="icon-btn delete-field" onclick="deleteField(this)" title="Remove Field">
+            <i class="fas fa-times"></i>
+          </button>
         `;
         container.appendChild(div);
       });
@@ -92,19 +93,28 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
   
-        // Create headers with input fields for renaming
+        // Create headers with checkboxes for inclusion/exclusion
         let thRow = "<tr>";
         columns.forEach((col, idx) => {
           thRow += `
             <th>
-              <input type="text" data-colidx="${idx}" value="${col}" />
+              <div class="column-header">
+                <input type="checkbox" 
+                       class="column-toggle" 
+                       data-idx="${idx}" 
+                       checked />
+                <input type="text" 
+                       class="column-name" 
+                       data-idx="${idx}" 
+                       value="${col}" />
+              </div>
             </th>
           `;
         });
         thRow += "</tr>";
         headEl.innerHTML = thRow;
   
-        // Display first 10 data rows
+        // Display data rows
         const maxPreview = 10;
         for (let r = 0; r < dataRows.length && r < maxPreview; r++) {
           const row = dataRows[r];
@@ -146,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
   
         try {
-          const res = await fetch("/upload-csv", {
+          const res = await fetch("/upload-data", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
@@ -216,6 +226,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Call fetchLogs to populate the side panel
   fetchLogs();
+
+  // File Upload Handling
+  const inputFile = document.getElementById("inputFile");
+  if (inputFile) {
+    inputFile.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        if (file.name.endsWith('.csv')) {
+          previewFile(file);
+        } else if (file.name.endsWith('.json')) {
+          previewJSON(file);
+        }
+      }
+    });
+  }
+
+  // Panel Toggle functionality
+  const panelToggle = document.querySelector('.panel-toggle');
+  const sidePanel = document.querySelector('.side-panel');
+  const container = document.querySelector('.container');
+  const toggleIcon = panelToggle.querySelector('i');
+
+  panelToggle.addEventListener('click', () => {
+    sidePanel.classList.toggle('collapsed');
+    container.classList.toggle('panel-collapsed');
+    
+    // Toggle icon between left and right chevron
+    if (sidePanel.classList.contains('collapsed')) {
+      toggleIcon.classList.remove('fa-chevron-left');
+      toggleIcon.classList.add('fa-chevron-right');
+    } else {
+      toggleIcon.classList.remove('fa-chevron-right');
+      toggleIcon.classList.add('fa-chevron-left');
+    }
+  });
 });    
   
   // Search Page Functions (Home/Search)
@@ -402,3 +447,19 @@ async function doDownload() {
       console.error('Error fetching total count:', err);
     }
   }
+
+
+// Add event listener for page load to clear any cached form data
+document.addEventListener('DOMContentLoaded', function() {
+  // Reset the file input
+  const fileInput = document.getElementById("inputFile");
+  if (fileInput) {
+    fileInput.value = "";
+  }
+  
+  // Clear any previous status messages
+  const statusEl = document.getElementById("uploadStatus");
+  if (statusEl) {
+    statusEl.style.display = "none";
+  }
+});

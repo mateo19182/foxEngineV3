@@ -2,18 +2,32 @@
 
 ## Todo
 
-- ingest script, accept zip, json and csv
-  - add filename as source by default, allow change
-  - don't do _id, mongodb should do it automatically
-  - use a unique index to find dups (username + source ?)
-- pagination
-- figure out how to show record wih weird fields...
-- history log with everything done
-- copy other cool stuff from v1 and v2!
+### ETL
+- add json and zip support
+- validate and clean file, save to server b4 writing?
+- Bulk Writes and stream data with batches, disable index during insert
+- use compression, paralelize and MongoDB Write Concern
+- ingest script
+- add filename as source by default, allow change
+- don't do _id, mongodb does it automatically, replace on same id or exactly same values
+- breakdown better results of import
+
+### Schema/Db
+- figure out if present in service, checked and hashed password 
+- figure out how to show record new fields
 - try lots of records
+- fuzzy search and/or regex
+
+
+### Other
+- copy other cool stuff from v1 and v2!
 - improve ui
 - optimize docker
 - personlize export
-- fuzzy search and/or regex
+- pagination, handlebars?
+- allow checker to check bd first
 - add cluster to production
 - llm integration xd
+
+- document store
+  https://github.com/minio/minio/blob/master/docs/select/README.md

@@ -110,52 +110,6 @@ def get_collection_schema(db_name, collection_name):
     except Exception as e:
         print(f"Error getting collection schema: {e}")
 
-def initialize_database():
-    """Initialize the database with required schema and indexes."""
-    try:
-        client = MongoClient(MONGO_URI)
-        db = client[DATABASE_NAME]
-        
-        # Create records collection with schema validation
-        try:
-            db.create_collection("records", validator={
-                "$jsonSchema": {
-                    "bsonType": "object",
-                    "required": ["source", "username", "createdAt", "lastModified"],
-                    "properties": {
-                        "source": {
-                            "bsonType": "string",
-                            "description": "source must be a string and is required"
-                        },
-                        "username": {
-                            "bsonType": "string",
-                            "description": "username must be a string and is required"
-                        },
-                        "createdAt": {
-                            "bsonType": "date",
-                            "description": "createdAt must be a date and is required"
-                        },
-                        "lastModified": {
-                            "bsonType": "date",
-                            "description": "lastModified must be a date and is required"
-                        }
-                    },
-                    "additionalProperties": True
-                }
-            })
-            print("Records collection created successfully.")
-        except Exception as e:
-            print(f"Collection already exists")
-
-        # Create indexes
-        records = db["records"]
-        records.create_index([("source", 1), ("username", 1)], unique=True)
-        records.create_index([("createdAt", 1)])
-        records.create_index([("lastModified", 1)])
-        print("Indexes created successfully.")
-
-    except Exception as e:
-        print(f"Error initializing database: {e}")
 
 def load_test_data() -> List[Dict]:
     """Load test data from both JSON and CSV files."""
@@ -188,6 +142,7 @@ def load_test_data() -> List[Dict]:
 
     return test_data
 
+
 def add_test_data():
     """Add test data through the API."""
     try:
@@ -203,34 +158,45 @@ def add_test_data():
         token = response.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
         
-        # Load test data from JSON file
-        test_data_path = os.path.join(os.path.dirname(__file__), 'app', 'data', 'test_data.json')
-        with open(test_data_path, 'r') as f:
-            test_data = json.load(f)['records']
-
-        for record in test_data:
-            try:
-                # Convert record to rows and columns format
-                columns = list(record.keys())
-                rows = [[str(record[col]) for col in columns]]
-                
-                payload = {
-                    "rows": rows,
-                    "columns": columns
-                }
-                
-                response = requests.post(
-                    API_URL + "upload-csv",
-                    json=payload,
-                    headers=headers
-                )
-                
-                if response.status_code == 200:
-                    print(f"Added test record for {record['username']}")
-                else:
-                    print(f"Error adding test record: {response.text}")
-            except Exception as e:
-                print(f"Error adding test record: {e}")
+        # Load and send JSON test data
+        json_path = os.path.join(os.path.dirname(__file__), 'app', 'data', 'test_data.json')
+        with open(json_path, 'r') as f:
+            json_data = json.load(f)
+            # Changed to handle direct list of records instead of nested structure
+            records = json_data  # Now expecting direct list of records
+            columns = list(records[0].keys()) if records else []
+            rows = [
+                [record[col] for col in columns]
+                for record in records
+            ]
+            payload = {
+                "rows": rows,
+                "columns": columns
+            }
+            response = requests.post(
+                API_URL + "upload-data",
+                json=payload,
+                headers=headers
+            )
+            if response.status_code == 200:
+                print("Added test records from JSON file.")
+            else:
+                print(f"Error adding test records from JSON: {response.text}")
+    
+        # Load and send CSV test data
+        csv_path = os.path.join(os.path.dirname(__file__), 'app', 'data', 'test_data.csv')
+        with open(csv_path, 'r') as f:
+            csv_data = f.read()
+            response = requests.post(
+                API_URL + "upload-data",
+                data=csv_data,
+                headers={**headers, "Content-Type": "text/csv"}
+            )
+            if response.status_code == 200:
+                print("Added test records from CSV file.")
+            else:
+                print(f"Error adding test records from CSV: {response.text}")
+    
     except Exception as e:
         print(f"Operation failed: {e}")
 
@@ -262,7 +228,6 @@ def print_usage():
     print("  python user_manager.py add_collection <db_name> <collection_name> - Add a new collection")
     print("  python user_manager.py del_collection <db_name> <collection_name> - Delete a collection")
     print("  python user_manager.py schema <db_name> <collection_name> - Show collection schema")
-    print("  python user_manager.py init               - Initialize database with schema and indexes")
     print("  python user_manager.py test_data          - Add test data through API")
 
 def main():
@@ -272,9 +237,7 @@ def main():
 
     command = sys.argv[1]
 
-    if command == "init":
-        initialize_database()
-    elif command == "test_data":
+    if command == "test_data":
         add_test_data()
     elif command == "list":
         list_users()

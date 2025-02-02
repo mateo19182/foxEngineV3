@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, HTTPException, Depends, Path, Query
+from fastapi import APIRouter, Request, HTTPException, Depends, Path, Query, UploadFile, File, Form
 from datetime import datetime
 import pymongo
 from bson.objectid import ObjectId
@@ -10,19 +10,33 @@ from ..auth.jwt import get_current_user
 from ..utils.logging import logs_collection, log_api_call
 from typing import Optional, List
 import logging
+from ..services.ingestion_service import DataIngestionService
+import json
 
 router = APIRouter()
 
 # Set up logging
 logger = logging.getLogger("uvicorn.error")
 
-@router.post("/upload-csv", summary="Upload CSV data", 
-    description="Upload CSV data with required 'source' and 'username' columns")
-async def upload_csv(request: Request, current_user: str = Depends(get_current_user)):
+@router.post("/upload-data", summary="Upload CSV or JSON data", 
+    description="Upload data in CSV or JSON format with required 'source' and 'username' fields")
+async def upload_data(request: Request, current_user: str = Depends(get_current_user)):
     try:
-        data = await request.json()
-        rows = data.get("rows", [])
-        columns = data.get("columns", [])
+        content_type = request.headers.get('Content-Type')
+        if content_type == 'application/json':
+            data = await request.json()
+            rows = data.get("rows", [])
+            columns = data.get("columns", [])
+        elif content_type == 'text/csv':
+            body = await request.body()
+            # Assuming CSV data is sent as a string
+            data = io.StringIO(body.decode('utf-8'))
+            df = pd.read_csv(data)
+            rows = df.values.tolist()
+            columns = df.columns.tolist()
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported media type. Use application/json or text/csv.")
+
         if not rows or not columns:
             raise HTTPException(status_code=400, detail="No data provided")
 
@@ -30,7 +44,7 @@ async def upload_csv(request: Request, current_user: str = Depends(get_current_u
         if "source" not in columns or "username" not in columns:
             raise HTTPException(
                 status_code=400, 
-                detail="CSV must contain 'source' and 'username' columns"
+                detail="Data must contain 'source' and 'username' fields"
             )
 
         current_time = datetime.utcnow()
@@ -53,7 +67,7 @@ async def upload_csv(request: Request, current_user: str = Depends(get_current_u
         try:
             res = collection.insert_many(records, ordered=False)
             inserted_count = len(res.inserted_ids)
-            log_api_call("/upload-csv", "POST", current_user, 
+            log_api_call("/upload-data", "POST", current_user, 
                         additional_info=f"Records inserted: {inserted_count}")
             return {"inserted_count": inserted_count}
         except pymongo.errors.BulkWriteError as bwe:
@@ -61,7 +75,7 @@ async def upload_csv(request: Request, current_user: str = Depends(get_current_u
             inserted_count = bwe.details.get('nInserted', 0)
             duplicates = len([err for err in bwe.details.get('writeErrors', []) 
                             if err.get('code') == 11000])
-            log_api_call("/upload-csv", "POST", current_user, 
+            log_api_call("/upload-data", "POST", current_user, 
                         status_code=207, 
                         error="Partial success",
                         additional_info=f"Records inserted: {inserted_count}, Duplicates: {duplicates}")
@@ -71,7 +85,7 @@ async def upload_csv(request: Request, current_user: str = Depends(get_current_u
                 "message": "Some records were duplicates and were skipped"
             }
     except Exception as e:
-        log_api_call("/upload-csv", "POST", current_user, 500, str(e))
+        log_api_call("/upload-data", "POST", current_user, 500, str(e))
         raise
 
 @router.get("/list", summary="List records", 
@@ -249,3 +263,43 @@ async def get_logs(
         log["timestamp"] = log["timestamp"].isoformat()
         logs.append(log)
     return logs
+
+@router.post("/upload-file", summary="Upload data file")
+async def upload_file(
+    file: UploadFile = File(...),
+    column_mappings: str = Form(None),
+    included_columns: str = Form(None),
+    fixed_fields: str = Form(None),
+    current_user: str = Depends(get_current_user)
+):
+    try:
+        # Parse the JSON strings into Python objects
+        column_mappings_dict = json.loads(column_mappings) if column_mappings else None
+        included_columns_list = json.loads(included_columns) if included_columns else None
+        fixed_fields_dict = json.loads(fixed_fields) if fixed_fields else None
+
+        # Validate included_columns format
+        if included_columns_list is not None:
+            if not isinstance(included_columns_list, list) or not all(isinstance(x, int) for x in included_columns_list):
+                raise HTTPException(status_code=400, detail="included_columns must be a list of integers")
+
+        ingestion_service = DataIngestionService(collection)
+        result = await ingestion_service.process_file(
+            file, 
+            current_user,
+            column_mappings_dict,
+            included_columns_list,
+            fixed_fields_dict
+        )
+        
+        log_api_call(
+            "/upload-file", 
+            "POST", 
+            current_user,
+            additional_info=f"Records inserted: {result['inserted_count']}, Columns dropped: {len(included_columns_list) if included_columns_list else 0}"
+        )
+        
+        return result
+    except Exception as e:
+        log_api_call("/upload-file", "POST", current_user, 500, str(e))
+        raise HTTPException(status_code=500, detail=str(e))
