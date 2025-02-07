@@ -6,7 +6,7 @@ client = MongoClient(MONGO_URI, server_api=ServerApi("1"))
 db = client["my_database"]
 collection = db["records"]
 users_collection = db["users"]
-
+files_collection = db["files"]
 # Initialize collections and indexes
 def init_db():
     try:
@@ -35,6 +35,10 @@ def init_db():
                 "additionalProperties": True
             }
         })
+        
+        # Initialize files collection
+        db.create_collection("files")
+        
     except Exception as e:
         print(f"Collection might already exist: {e}")
 
@@ -42,3 +46,8 @@ def init_db():
     collection.create_index([("username", 1)], unique=True)
     collection.create_index([("createdAt", 1)])
     collection.create_index([("lastModified", 1)])
+    
+    # Create indexes for files collection
+    files_collection.create_index([("file_hash", 1)])
+    files_collection.create_index([("uploaded_by", 1)])
+    files_collection.create_index([("uploaded_at", -1)])

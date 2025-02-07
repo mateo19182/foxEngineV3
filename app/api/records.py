@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 import pandas as pd
 import io
 from fastapi.responses import StreamingResponse
-from ..database.client import collection
+from ..database.client import collection, files_collection
 from ..auth.jwt import get_current_user
 from ..utils.logging import logs_collection, log_api_call
 from typing import Optional, List
@@ -265,8 +265,9 @@ async def get_logs(
     return logs
 
 @router.post("/upload-file", summary="Upload data file")
-async def upload_file(
+def upload_file(
     file: UploadFile = File(...),
+    delimiter: str = Form(","),
     column_mappings: str = Form(None),
     included_columns: str = Form(None),
     fixed_fields: str = Form(None),
@@ -283,8 +284,25 @@ async def upload_file(
             if not isinstance(included_columns_list, list) or not all(isinstance(x, int) for x in included_columns_list):
                 raise HTTPException(status_code=400, detail="included_columns must be a list of integers")
 
-        ingestion_service = DataIngestionService(collection)
-        result = await ingestion_service.process_file(
+        # Read the first line to get total number of columns
+        content = file.file.read()
+        file.file.seek(0)  # Reset file pointer
+        
+        total_columns = 0
+        if file.content_type in ['text/csv', 'application/vnd.ms-excel', 'csv']:
+            first_line = content.decode('utf-8').split('\n')[0]
+            total_columns = len(first_line.split(','))
+        elif file.content_type in ['application/json', 'json']:
+            data = json.loads(content.decode('utf-8'))
+            if isinstance(data, dict) and 'rows' in data:
+                total_columns = len(data['rows'][0]) if data['rows'] else 0
+            elif isinstance(data, list):
+                total_columns = len(data[0]) if data else 0
+        
+        file.file.seek(0)  # Reset file pointer again
+
+        ingestion_service = DataIngestionService(collection, files_collection)
+        result = ingestion_service.process_file(
             file, 
             current_user,
             column_mappings_dict,
@@ -292,14 +310,49 @@ async def upload_file(
             fixed_fields_dict
         )
         
+        # Calculate dropped columns
+        included_count = len(included_columns_list) if included_columns_list is not None else total_columns
+        dropped_columns = total_columns - included_count if total_columns > 0 else 0
+        
+        log_message = (
+            f"Records inserted: {result['inserted_count']}, "
+            f"Total columns: {total_columns}, "
+            f"Columns included: {included_count}, "
+            f"Columns dropped: {dropped_columns}"
+        )
+        
+        if 'duplicate_count' in result:
+            log_message += f", Duplicates: {result['duplicate_count']}"
+            
+        if 'error_message' in result:
+            log_message += f", Error: {result['error_message']}"
+            
+        if 'validation_errors' in result:
+            log_message += f", Validation errors: {'; '.join(result['validation_errors'])}"
+        
+        status_code = 200 if result['inserted_count'] > 0 else 400
+        
         log_api_call(
             "/upload-file", 
             "POST", 
             current_user,
-            additional_info=f"Records inserted: {result['inserted_count']}, Columns dropped: {len(included_columns_list) if included_columns_list else 0}"
+            status_code=status_code,
+            error=result.get('error_message'),
+            additional_info=log_message
         )
         
+        # Add column statistics to result
+        result.update({
+            "total_columns": total_columns,
+            "included_columns": included_count,
+            "dropped_columns": dropped_columns
+        })
+        
+        if status_code != 200:
+            raise HTTPException(status_code=status_code, detail=result)
+            
         return result
     except Exception as e:
         log_api_call("/upload-file", "POST", current_user, 500, str(e))
         raise HTTPException(status_code=500, detail=str(e))
+

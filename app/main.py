@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from .api import auth, records, views
+from .api import auth, records, views, files
 from .database.client import init_db
 
 app = FastAPI()
@@ -25,3 +25,4 @@ init_db()
 app.include_router(views.router)
 app.include_router(auth.router, tags=["auth"])
 app.include_router(records.router, tags=["records"])
+app.include_router(files.router, tags=["files"])

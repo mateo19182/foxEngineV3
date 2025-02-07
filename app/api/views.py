@@ -26,4 +26,13 @@ async def upload_page(request: Request):
 async def login_page():
     """Login page."""
     with open("templates/login.html", "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
+@router.get("/files", response_class=HTMLResponse)
+async def files_page(request: Request):
+    """Files management page."""
+    user = await get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    with open("templates/files.html", "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read()) 

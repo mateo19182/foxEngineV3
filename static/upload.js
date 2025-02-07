@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", function() {
   const uploadBtn = document.getElementById("uploadBtn");
   const addFixedFieldBtn = document.getElementById("addFixedFieldBtn");
   const fixedFieldsContainer = document.getElementById("fixedFields");
+  const delimiterInput = document.getElementById("delimiterInput");
+  const delimiterGroup = document.getElementById("delimiterGroup");
 
   let fileData = null;
   let parsedData = [];
@@ -16,36 +18,80 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Listen for file selection changes
   fileInput.addEventListener("change", function(evt) {
+    const delimiterGroup = document.getElementById("delimiterGroup");
+    
     if (evt.target.files && evt.target.files[0]) {
       fileData = evt.target.files[0];
+      // Show/hide delimiter input based on file type
+      delimiterGroup.style.display = fileData.name.endsWith(".csv") ? "flex" : "none";
+      
       const reader = new FileReader();
       reader.onload = function(e) {
-         const text = e.target.result;
-         try {
-            if (fileData.name.endsWith(".csv")) {
-               parseCSV(text);
-            } else if (fileData.name.endsWith(".json")) {
-               parseJSON(text);
-            } else {
-               showStatus("Unsupported file type", "error");
-            }
-         } catch (err) {
-           showStatus("Error parsing file: " + err.message, "error");
-         }
+        const text = e.target.result;
+        try {
+          if (fileData.name.endsWith(".csv")) {
+            const delimiter = document.getElementById("delimiterInput").value || ",";
+            parseCSV(text, delimiter);
+          } else if (fileData.name.endsWith(".json")) {
+            parseJSON(text);
+          } else {
+            showStatus("Unsupported file type", "error");
+          }
+        } catch (err) {
+          showStatus("Error parsing file: " + err.message, "error");
+        }
       };
       reader.readAsText(fileData);
+    } else {
+      delimiterGroup.style.display = "none";
     }
   });
 
+  // Add this after the file input handler
+  if (delimiterInput) {
+    delimiterInput.addEventListener("input", function() {
+      if (fileData && fileData.name.endsWith(".csv")) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          parseCSV(e.target.result, delimiterInput.value || ",");
+        };
+        reader.readAsText(fileData);
+      }
+    });
+  }
+
   // Parse CSV file – first row as header and following rows as data
-  function parseCSV(text) {
+  function parseCSV(text, delimiter) {
     const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
     if (lines.length < 2) {
-      showStatus("CSV file must have a header and at least one data row.", "error");
-      return;
+        showStatus("CSV file must have a header and at least one data row.", "error");
+        return;
     }
-    headers = lines[0].split(",").map(s => s.trim());
-    parsedData = lines.slice(1).map(line => line.split(","));
+
+    // Parse headers using the specified delimiter
+    headers = lines[0].split(delimiter).map(s => s.trim());
+
+    // Parse data rows with special handling for array fields
+    parsedData = lines.slice(1).map(line => {
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+
+        // Parse each character to handle quoted values properly
+        for (let char of line) {
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === delimiter && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        return values;
+    });
+
     renderPreviewTable(headers, parsedData);
   }
 
@@ -162,9 +208,15 @@ document.addEventListener("DOMContentLoaded", function() {
     checkboxes.forEach((checkbox, idx) => {
       if (checkbox.checked) {
         includedColumns.push(idx);
-        columnMappings[idx] = nameInputs[idx].value.trim();
+        const newColumnName = nameInputs[idx].value.trim();
+        if (newColumnName) {
+          columnMappings[idx] = newColumnName;
+        }
       }
     });
+
+    console.log('Column Mappings:', columnMappings);
+    console.log('Included Columns:', includedColumns);
 
     // Get fixed fields
     const fixedFields = {};
@@ -179,6 +231,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Build FormData for POSTing.
     const formData = new FormData();
     formData.append("file", fileData);
+    formData.append("delimiter", document.getElementById("delimiterInput").value || ",");
     formData.append("column_mappings", JSON.stringify(columnMappings));
     formData.append("included_columns", JSON.stringify(includedColumns));
     formData.append("fixed_fields", JSON.stringify(fixedFields));

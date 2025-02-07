@@ -14,6 +14,10 @@ h1, h2, h3 {
     background: #1e1e1e;
     border-color: #333;
     color: #e0e0e0;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 th, td, table {
@@ -26,14 +30,14 @@ th, td, table {
     padding: 2rem;
     margin: 0 auto;
     margin-left: 500px;
-    
+    margin-top: 80px;
 }
 
 /* Side Panel for Logs */
 .side-panel {
     position: fixed;
     left: 0;
-    top: 0;
+    top: 64px;
     bottom: 0;
     width: 300px;
     background: #1e1e1e;
@@ -147,37 +151,67 @@ td {
     color: #ddd;
 }
 
-/* Modal Overlay */
+/* Modal overlay styling */
 .overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    display: none;
+    background-color: rgba(0, 0, 0, 0.6); /* dark semi-transparent background */
+    display: none; /* hidden by default */
     justify-content: center;
     align-items: center;
-    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
 }
 
-/* Modal Content */
+/* Modal box styling */
 .modal {
-    background: #333;
-    padding: 2rem;
+    background-color: #1e1e1e;  /* dark background to match the rest of the UI */
+    border: 1px solid #444;     /* consistent border color */
     border-radius: 8px;
+    padding: 20px;
     width: 90%;
-    max-width: 500px;
+    max-width: 600px;
+    max-height: 80vh;           /* scroll if content overflows */
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    color: #e0e0e0;
 }
 
+/* Modal header styling */
 .modal h3 {
     margin-top: 0;
+    margin-bottom: 20px;
 }
 
-/* Modal Actions */
+/* Modal actions styling */
 .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 1rem;
+    text-align: right;
+    margin-top: 15px;
+}
+
+/* Button styling (ensure the icon buttons look neat) */
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* Formatting for file details text */
+.file-details p {
+    margin: 0.5rem 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Utility class for breaking long texts (like file hash) */
+.text-break {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    display: inline-block;
 }
 
 /* Search Fields */
@@ -204,11 +238,10 @@ td {
     color: #cc0000;
 }
 
-.dark-mode .delete-field {
+.delete-field {
     color: #ff6666;
 }
-
-.dark-mode .delete-field:hover {
+ .delete-field:hover {
     color: #ff4444;
 }
 
@@ -298,11 +331,11 @@ td {
   mix-blend-mode: difference;
 }
 
-.dark-mode .progress-bar {
+.progress-bar {
   background-color: #333;
 }
 
-.dark-mode .progress-text {
+ .progress-text {
   color: #fff;
 }
 
@@ -347,7 +380,7 @@ td {
   background-color: rgba(255, 0, 0, 0.1);
 }
 
-.dark-mode .dropped-column {
+.dropped-column {
   background-color: rgba(255, 0, 0, 0.2);
 }
 
@@ -401,7 +434,7 @@ td {
 .side-panel {
   position: fixed;
   left: 0;
-  top: 0;
+  top: 64px;
   bottom: 0;
   width: 300px;
   background: #1e1e1e;
@@ -435,5 +468,124 @@ td {
   
   .container {
     margin-left: auto;
+    margin-top: 80px;
   }
+}
+
+.input-group {
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.input-group label {
+  min-width: 120px;
+}
+
+.input-group input {
+  padding: 0.5rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  width: 50px;
+  text-align: center;
+}
+
+.file-details {
+    margin: 1rem 0;
+}
+
+.file-details p {
+    margin: 0.5rem 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+#filesTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+#filesTable th,
+#filesTable td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+
+#filesTable th {
+    background-color: #1e1e1e;
+    color: #fff;
+}
+
+#filesTable th {
+    background-color: #333;
+}
+
+/* Add this to your existing CSS */
+.upload-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#delimiterInput {
+  width: 30px;
+  text-align: center;
+  padding: 0.3rem;
+}
+
+.nav-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #333;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.nav-buttons {
+    flex: 1;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.nav-count {
+    flex: 0;
+    color: #fff;
+    text-align: left;
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    padding: 0.5rem 2rem;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin-right: auto;
+    min-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.text-break {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    display: inline-block;
 }

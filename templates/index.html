@@ -11,26 +11,27 @@
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   </head>
-  <body class="light-mode">
-    <div class="container">
-      <header>
-        <!-- Light/Dark Toggle Button -->
-        <button id="themeToggle" class="icon-btn" title="Toggle Light/Dark">
-            <i class="fas fa-sun"></i>
-        </button>
-        <nav>
-            <a href="/" title="Home"><i class="fas fa-home"></i></a>
-            <a href="/upload" title="Upload Page"><i class="fas fa-upload"></i></a>
-            <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
-        </nav>
-    </header>
+  <body>
+    <nav class="nav-bar">
+        <span id="totalCount" class="nav-count">Total Records: Loading...</span>
+        <div class="nav-buttons">
+            <a href="/" class="icon-btn" title="Home">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="/files" class="icon-btn" title="View Files">
+                <i class="fas fa-folder-open"></i>
+            </a>
+            <a href="/upload" class="icon-btn" title="Upload">
+                <i class="fas fa-upload"></i>
+            </a>
+            <button onclick="window.location.href='/logout'" class="icon-btn" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
 
-      <h1>
-        <section class="section">
-            <p id="totalCount">Total Records: Loading...</p>
-          </section>
-      </h1>
-      
+    <div class="container">
+
       <!-- Search/Filter Section -->
       <section class="section">
         <h2>Search</h2>

@@ -1,27 +1,7 @@
 // scripts.js
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Theme Toggle
-    const themeToggle = document.getElementById("themeToggle");
-    if (themeToggle) {
-        themeToggle.addEventListener("click", () => {
-          const body = document.body;
-          const icon = themeToggle.querySelector("i");
-          if (body.classList.contains("light-mode")) {
-            body.classList.remove("light-mode");
-            body.classList.add("dark-mode");
-            icon.classList.remove("fa-sun");
-            icon.classList.add("fa-moon");
-            localStorage.setItem('theme', 'dark');
-          } else {
-            body.classList.remove("dark-mode");
-            body.classList.add("light-mode");
-            icon.classList.remove("fa-moon");
-            icon.classList.add("fa-sun");
-            localStorage.setItem('theme', 'light');
-          }
-        });
-      }
+
   
     // Add Field Button (Home/Search Page)
     const addFieldBtn = document.getElementById("addFieldBtn");
@@ -171,26 +151,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-  const savedTheme = localStorage.getItem('theme');
   const body = document.body;
-  const icon = themeToggle ? themeToggle.querySelector("i") : null;
 
-  if (savedTheme === 'dark') {
-    body.classList.remove("light-mode");
-    body.classList.add("dark-mode");
-    if (icon) {
-      icon.classList.remove("fa-sun");
-      icon.classList.add("fa-moon");
-    }
-  } else {
-    // Default to light mode if no theme is saved
-    body.classList.remove("dark-mode");
-    body.classList.add("light-mode");
-    if (icon) {
-      icon.classList.remove("fa-moon");
-      icon.classList.add("fa-sun");
-    }
-  }
 
   // Fetch and display the total count
   fetchTotalCount();
@@ -242,25 +204,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Panel Toggle functionality
-  const panelToggle = document.querySelector('.panel-toggle');
-  const sidePanel = document.querySelector('.side-panel');
-  const container = document.querySelector('.container');
-  const toggleIcon = panelToggle.querySelector('i');
-
-  panelToggle.addEventListener('click', () => {
-    sidePanel.classList.toggle('collapsed');
-    container.classList.toggle('panel-collapsed');
-    
-    // Toggle icon between left and right chevron
-    if (sidePanel.classList.contains('collapsed')) {
-      toggleIcon.classList.remove('fa-chevron-left');
-      toggleIcon.classList.add('fa-chevron-right');
-    } else {
-      toggleIcon.classList.remove('fa-chevron-right');
-      toggleIcon.classList.add('fa-chevron-left');
-    }
-  });
 });    
   
   // Search Page Functions (Home/Search)

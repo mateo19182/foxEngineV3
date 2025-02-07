@@ -12,31 +12,41 @@
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   </head>
-  <body class="light-mode">
+  <body>
+    <nav class="nav-bar">
+        <div class="nav-buttons">
+            <a href="/" class="icon-btn" title="Home">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="/files" class="icon-btn" title="View Files">
+                <i class="fas fa-folder-open"></i>
+            </a>
+            <a href="/upload" class="icon-btn" title="Upload">
+                <i class="fas fa-upload"></i>
+            </a>
+            <button onclick="window.location.href='/logout'" class="icon-btn" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
     <div class="container">
-      <header>
-        <!-- Light/Dark Toggle Button -->
-        <button id="themeToggle" class="icon-btn" title="Toggle Light/Dark">
-            <i class="fas fa-sun"></i>
-        </button>
-        <nav>
-            <a href="/" title="Home"><i class="fas fa-home"></i></a>
-            <a href="/upload" title="Upload Page"><i class="fas fa-upload"></i></a>
-            <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
-        </nav>
-    </header>
-
       <h1>Upload Data File</h1>
 
-      <!-- File selection & progress -->
-      <section class="section">
-        <input type="file" id="fileInput" accept=".csv,.json" />
-        <div id="uploadStatus"></div>
-        <div id="uploadProgress" class="progress-bar" style="display: none;">
-          <div class="progress-fill"></div>
-          <div class="progress-text">0%</div>
-        </div>
-      </section>
+<!-- File selection & progress -->
+<section class="section">
+  <div class="upload-controls">
+    <input type="file" id="fileInput" accept=".csv,.json" />
+    <div class="input-group" id="delimiterGroup" style="display: none;">
+      <label for="delimiterInput">Delimiter:</label>
+      <input type="text" id="delimiterInput" maxlength="1" placeholder="," title="Enter delimiter character" style="width: 30px;" />
+    </div>
+  </div>
+  <div id="uploadStatus"></div>
+  <div id="uploadProgress" class="progress-bar" style="display: none;">
+    <div class="progress-fill"></div>
+    <div class="progress-text">0%</div>
+  </div>
+</section>
 
       <hr/>
 
@@ -77,5 +87,12 @@
 
     <script src="/static/upload.js"></script>
     <script src="/static/scripts.js"></script>
+    <script>
+      // Set default delimiter
+      const delimiterInput = document.getElementById("delimiterInput");
+      if (delimiterInput) {
+        delimiterInput.value = ",";
+      }
+    </script>
   </body>
 </html>

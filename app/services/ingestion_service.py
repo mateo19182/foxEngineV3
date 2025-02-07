@@ -3,12 +3,15 @@ import pandas as pd
 import json
 from datetime import datetime
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorClient
+from pymongo.collection import Collection
 import logging
 from fastapi import UploadFile
 import io
 import pymongo
 import math
+from app.services.storage_service import StorageService
+import numpy as np
+import csv
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -16,10 +19,11 @@ CHUNK_SIZE = 1000  # Number of records to process at once
 
 
 class DataIngestionService:
-    def __init__(self, collection: AsyncIOMotorCollection):
+    def __init__(self, collection: Collection, files_collection: Collection):
         self.collection = collection
+        self.files_collection = files_collection
 
-    async def process_file(
+    def process_file(
         self, 
         file: UploadFile,
         current_user: str,
@@ -27,17 +31,24 @@ class DataIngestionService:
         included_columns: List[int] = None,
         fixed_fields: Dict[str, str] = None
     ) -> Dict[str, int]:
-        """
-        Process uploaded file in chunks and insert into MongoDB
-        """
+        """Process uploaded file and insert into MongoDB"""
         try:
+            # Save file first
+            storage_service = StorageService(self.files_collection)
+            file_metadata = storage_service.save_file(file, current_user)
+            
             content_type = file.content_type or file.filename.split('.')[-1]
             logger.info(f"Processing file with content type: {content_type}")
             
+            # Add file metadata to fixed fields
+            if fixed_fields is None:
+                fixed_fields = {}
+            fixed_fields['file_source'] = file_metadata['stored_filename']
+            
             if content_type in ['application/json', 'json']:
-                return await self._process_json_file(file, current_user, column_mappings, included_columns, fixed_fields)
+                return self._process_json_file(file, current_user, column_mappings, included_columns, fixed_fields)
             elif content_type in ['text/csv', 'application/vnd.ms-excel', 'csv']:
-                return await self._process_csv_file(
+                return self._process_csv_file(
                     file, 
                     current_user, 
                     column_mappings, 
@@ -50,7 +61,7 @@ class DataIngestionService:
             logger.error(f"Error processing file: {str(e)}", exc_info=True)
             raise
 
-    async def _process_json_file(
+    def _process_json_file(
         self, 
         file: UploadFile,
         current_user: str,
@@ -58,7 +69,7 @@ class DataIngestionService:
         included_columns: List[int] = None,
         fixed_fields: Dict[str, str] = None
     ) -> Dict[str, int]:
-        content = await file.read()
+        content = file.file.read()
         try:
             data = json.loads(content.decode('utf-8'))
             logger.info(f"JSON data type: {type(data)}")
@@ -76,6 +87,10 @@ class DataIngestionService:
             # Convert rows to DataFrame for consistent processing
             df = pd.DataFrame(rows)
             
+            # Add this before applying the column mappings
+            logger.info(f"Original columns: {df.columns.tolist()}")
+            logger.info(f"Column mappings: {column_mappings}")
+            
             # Apply column filtering and mapping
             if included_columns is not None:
                 if len(included_columns) > len(df.columns):
@@ -83,63 +98,130 @@ class DataIngestionService:
                 df = df.iloc[:, included_columns]
             
             if column_mappings:
+                # Convert string keys to integers for proper mapping
+                column_mappings = {int(k): v for k, v in column_mappings.items()}
                 df.columns = [column_mappings.get(i, col) for i, col in enumerate(df.columns)]
             
-            # Convert back to records
-            filtered_rows = df.to_dict('records')
+            # After applying mappings
+            logger.info(f"New columns: {df.columns.tolist()}")
+            
+            # Convert DataFrame to records while preserving the new column names
+            records = json.loads(df.to_json(orient='records'))
+            filtered_rows = [record for record in records if any(record.values())]
             
             logger.info(f"Processing {len(filtered_rows)} JSON records")
-            return await self._process_records(filtered_rows, current_user, fixed_fields)
+            logger.info(f"Sample record after conversion: {records[0] if records else 'No records'}")
+            return self._process_records(filtered_rows, current_user, fixed_fields)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON format: {str(e)}")
         except Exception as e:
             logger.error(f"Error processing JSON: {str(e)}", exc_info=True)
             raise
 
-    async def _process_csv_file(
+    def _process_csv_file(
         self, 
         file: UploadFile,
         current_user: str,
         column_mappings: Dict[int, str] = None,
         included_columns: List[int] = None,
-        fixed_fields: Dict[str, str] = None
+        fixed_fields: Dict[str, str] = None,
+        delimiter: str = ","
     ) -> Dict[str, int]:
-        content = await file.read()
+        content = file.file.read()
         text = content.decode('utf-8')
         
         try:
+            # Use pandas with custom CSV reading configuration
             csv_file = io.StringIO(text)
+            
+            # First read headers
+            try:
+                headers = pd.read_csv(
+                    csv_file, 
+                    nrows=0,
+                    sep=delimiter,
+                    quoting=csv.QUOTE_MINIMAL,
+                    doublequote=True,
+                    escapechar='\\'
+                ).columns.tolist()
+                
+                # Identify potential array fields (fields that might contain lists)
+                array_fields = []
+                csv_file.seek(0)
+                sample_data = pd.read_csv(
+                    csv_file,
+                    nrows=5,
+                    sep=delimiter,
+                    quoting=csv.QUOTE_MINIMAL,
+                    doublequote=True,
+                    escapechar='\\'
+                )
+                
+                for col in sample_data.columns:
+                    # Check if any value in the column contains commas within quotes
+                    if sample_data[col].astype(str).str.contains('"[^"]*,[^"]*"').any():
+                        array_fields.append(col)
+                    # Also check for typical array field names
+                    elif any(keyword in col.lower() for keyword in ['tags', 'skills', 'categories', 'list']):
+                        array_fields.append(col)
+                
+                logger.info(f"Detected array fields: {array_fields}")
+                
+            except Exception as e:
+                logger.warning(f"Error in initial header reading: {str(e)}")
+                raise
+            
+            # Reset file pointer
+            csv_file.seek(0)
+            
+            # Custom converter for array fields
+            def convert_array_field(value):
+                if pd.isna(value):
+                    return None
+                if isinstance(value, str):
+                    # Remove outer quotes if present
+                    value = value.strip('"\'')
+                    # Split by comma, handling quoted values
+                    return [item.strip().strip('"\'') for item in value.split(',') if item.strip()]
+                return value
+
+            converters = {field: convert_array_field for field in array_fields}
+            
+            # Read CSV in chunks with proper handling of quoted fields
+            chunks = pd.read_csv(
+                csv_file,
+                chunksize=1000,
+                sep=delimiter,
+                quoting=csv.QUOTE_MINIMAL,
+                doublequote=True,
+                escapechar='\\',
+                converters=converters,
+                on_bad_lines='warn'
+            )
+            
             total_inserted = 0
             total_duplicates = 0
-
-            for chunk in pd.read_csv(csv_file, chunksize=CHUNK_SIZE):
+            
+            for chunk in chunks:
                 if chunk.empty:
                     continue
-                
-                # Apply column mappings and filtering
+                    
+                # Apply column filtering if specified
                 if included_columns is not None:
                     chunk = chunk.iloc[:, included_columns]
                 
+                # Apply column mappings if specified
                 if column_mappings:
+                    column_mappings = {int(k): v for k, v in column_mappings.items()}
                     chunk.columns = [column_mappings.get(i, col) for i, col in enumerate(chunk.columns)]
-                else:
-                    # Clean column names: strip whitespace and lowercase
-                    chunk.columns = [col.strip().lower() for col in chunk.columns]
                 
-                records = chunk.to_dict('records')
-                cleaned_records = []
+                # Convert to records while preserving column names
+                records = json.loads(chunk.to_json(orient='records'))
+                records = [record for record in records if any(record.values())]
                 
-                for record in records:
-                    # Remove any leading/trailing spaces from keys and values
-                    cleaned_record = {
-                        k.strip(): v.strip() if isinstance(v, str) else v
-                        for k, v in record.items()
-                    }
-                    cleaned_records.append(cleaned_record)
-                
-                logger.info(f"Processing chunk of {len(cleaned_records)} CSV records")
-                result = await self._process_records(cleaned_records, current_user, fixed_fields)
-                total_inserted += result['inserted_count']
+                # Process the chunk
+                result = self._process_records(records, current_user, fixed_fields)
+                total_inserted += result.get('inserted_count', 0)
                 total_duplicates += result.get('duplicate_count', 0)
 
             if total_inserted == 0 and total_duplicates == 0:
@@ -149,13 +231,12 @@ class DataIngestionService:
                 "inserted_count": total_inserted,
                 "duplicate_count": total_duplicates
             }
-        except pd.errors.EmptyDataError:
-            raise ValueError("CSV file is empty")
+            
         except Exception as e:
-            logger.error(f"Error processing CSV: {str(e)}", exc_info=True)
+            logger.error(f"Error processing CSV: {str(e)}")
             raise
 
-    async def _process_records(
+    def _process_records(
         self, 
         records: List[Dict],
         current_user: str,
@@ -189,7 +270,7 @@ class DataIngestionService:
             
             # Add source if not present
             if 'source' not in processed_record:
-                processed_record['source'] = 'file_import' + datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
+                processed_record['source'] = 'file_import_' + datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
             
             # Add any fixed fields
             if fixed_fields:
@@ -201,18 +282,14 @@ class DataIngestionService:
             return {"inserted_count": 0, "duplicate_count": 0}
 
         try:
-            result = self.collection.insert_many(processed_records)
-            return {
-                "inserted_count": len(result.inserted_ids),
-                "duplicate_count": 0
-            }
+            result = self.collection.insert_many(processed_records, ordered=False)
+            return {"inserted_count": len(result.inserted_ids)}
         except pymongo.errors.BulkWriteError as bwe:
-            inserted_count = bwe.details.get('nInserted', 0)
-            duplicate_count = sum(1 for err in bwe.details.get('writeErrors', []) 
-                                if err.get('code') == 11000)
+            # Handle partial success case
             return {
-                "inserted_count": inserted_count,
-                "duplicate_count": duplicate_count
+                "inserted_count": bwe.details.get('nInserted', 0),
+                "duplicate_count": len([err for err in bwe.details.get('writeErrors', []) 
+                                     if err.get('code') == 11000])
             }
         except Exception as e:
             logger.error(f"Error inserting records: {str(e)}")
@@ -220,11 +297,20 @@ class DataIngestionService:
 
     def _clean_value(self, value):
         """Clean and validate a value before insertion"""
+        # Handle arrays/lists
+        if isinstance(value, (list, np.ndarray)):
+            return [self._clean_value(item) for item in value if item is not None]
+        
+        # Handle scalar values
         if pd.isna(value) or pd.isnull(value):
             return None
         if isinstance(value, float):
             # Check for invalid float values
             if not math.isfinite(value):
+                return None
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:  # Empty string
                 return None
         return value
 
@@ -234,5 +320,7 @@ class DataIngestionService:
         for key, value in record.items():
             cleaned_value = self._clean_value(value)
             if cleaned_value is not None:  # Only include non-None values
+                if isinstance(cleaned_value, list) and not cleaned_value:  # Skip empty lists
+                    continue
                 cleaned_record[key] = cleaned_value
         return cleaned_record 

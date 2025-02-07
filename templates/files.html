@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Uploaded Files</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      referrerpolicy="no-referrer"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  </head>
+  <body>
+    <nav class="nav-bar">
+        <div class="nav-buttons">
+            <a href="/" class="icon-btn" title="Home">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="/files" class="icon-btn" title="View Files">
+                <i class="fas fa-folder-open"></i>
+            </a>
+            <a href="/upload" class="icon-btn" title="Upload">
+                <i class="fas fa-upload"></i>
+            </a>
+            <button onclick="window.location.href='/logout'" class="icon-btn" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
+    <div class="container">
+      <h1>Uploaded Files</h1>
+      
+      <section class="section">
+        <div class="table-wrapper">
+          <table id="filesTable">
+            <thead>
+              <tr>
+                <th>Original Filename</th>
+                <th>Upload Date</th>
+                <th>Size</th>
+                <th>Type</th>
+                <th>Uploaded By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="filesTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- File Details Modal -->
+    <div class="overlay" id="fileDetailsModal">
+      <div class="modal">
+        <h3>File Details</h3>
+        <div id="fileDetailsContent"></div>
+        <div class="modal-actions">
+          <button class="icon-btn" onclick="closeFileDetailsModal()" title="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/files.js"></script>
+    <script src="/static/scripts.js"></script>
+  </body>
+</html>
