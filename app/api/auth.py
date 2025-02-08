@@ -55,8 +55,8 @@ async def login(request: Request):
                 page = f.read()
             # Replace the placeholder with an error message
             page = page.replace(
-                '<div id="error-message" style="color: red;"></div>',
-                '<div id="error-message" style="color: red;">Invalid credentials</div>'
+                '<div id="error-message" class="status-message error d-none"></div>',
+                '<div id="error-message" class="status-message error">Invalid username or password</div>'
             )
             return HTMLResponse(content=page, status_code=401)
         

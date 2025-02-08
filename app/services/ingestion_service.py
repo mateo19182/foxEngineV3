@@ -98,9 +98,11 @@ class DataIngestionService:
                 df = df.iloc[:, included_columns]
             
             if column_mappings:
-                # Convert string keys to integers for proper mapping
                 column_mappings = {int(k): v for k, v in column_mappings.items()}
-                df.columns = [column_mappings.get(i, col) for i, col in enumerate(df.columns)]
+                df.columns = [
+                    column_mappings.get(included_columns[i], col)  # Use original index from included_columns
+                    for i, col in enumerate(df.columns)
+                ]
             
             # After applying mappings
             logger.info(f"New columns: {df.columns.tolist()}")
