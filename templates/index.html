@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <title>Home</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles/base.css" />
+    <link rel="stylesheet" href="/static/styles/layout.css" />
+    <link rel="stylesheet" href="/static/styles/components.css" />
+    <link rel="stylesheet" href="/static/styles/utilities.css" />
     <!-- Font Awesome CDN for Icons -->
     <link
       rel="stylesheet"
@@ -13,6 +16,10 @@
   </head>
   <body>
     <nav class="nav-bar">
+        <div class="nav-brand">
+            FoxEngine
+            <span class="nav-title">Home</span>
+        </div>
         <span id="totalCount" class="nav-count">Total Records: Loading...</span>
         <div class="nav-buttons">
             <a href="/" class="icon-btn" title="Home">
@@ -31,16 +38,29 @@
     </nav>
 
     <div class="container">
+      <header class="page-header">
+        <h1 class="page-title">Home</h1>
+      </header>
 
       <!-- Search/Filter Section -->
       <section class="section">
-        <h2>Search</h2>
+        <h1>Search</h1>
         <div id="searchFields">
           <div class="search-row">
-            <input type="text" placeholder="Field" class="field-name" />
+            <input type="text" placeholder="Field" list="availableFields" class="field-name" />
             <input type="text" placeholder="Value" class="field-value" />
           </div>
         </div>
+        <datalist id="availableFields">
+          <option value="username">
+          <option value="email">
+          <option value="age">
+          <option value="city">
+          <option value="active">
+          <option value="source">
+          <option value="tags">
+          <option value="skills">
+        </datalist>
         <button id="addFieldBtn" class="icon-btn" title="Add Field">
           <i class="fas fa-plus-circle"></i>
         </button>
@@ -65,11 +85,18 @@
         </div>
       </section>
 
-      <!-- Side Panel for Logs -->
-      <aside id="logsPanel" class="side-panel">
-        <h2>API Logs</h2>
-        <ul id="logsList"></ul>
-      </aside>
+      <!-- Logs Panel -->
+      <div id="logsPanel" class="logs-panel collapsed">
+        <div class="logs-panel-header" onclick="toggleLogs()">
+          <h2>API Logs</h2>
+          <button class="toggle-logs-btn">
+            <i class="fas fa-chevron-up"></i>
+          </button>
+        </div>
+        <div class="logs-content">
+          <ul id="logsList" class="logs-list"></ul>
+        </div>
+      </div>
     </div>
 
     <!-- Edit Modal -->

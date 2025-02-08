@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <title>Upload Data File</title>
-    <link rel="stylesheet" href="/static/styles.css" />
-    <!-- Font Awesome CDN for Icons -->
+    <link rel="stylesheet" href="/static/styles/base.css" />
+    <link rel="stylesheet" href="/static/styles/layout.css" />
+    <link rel="stylesheet" href="/static/styles/components.css" />
+    <link rel="stylesheet" href="/static/styles/utilities.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -14,6 +16,10 @@
   </head>
   <body>
     <nav class="nav-bar">
+        <div class="nav-brand">
+            FoxEngine
+            <span class="nav-title">Upload</span>
+        </div>
         <div class="nav-buttons">
             <a href="/" class="icon-btn" title="Home">
                 <i class="fas fa-home"></i>
@@ -30,7 +36,9 @@
         </div>
     </nav>
     <div class="container">
-      <h1>Upload Data File</h1>
+      <header class="page-header">
+        <h1 class="page-title">Upload</h1>
+      </header>
 
 <!-- File selection & progress -->
 <section class="section">
@@ -61,11 +69,7 @@
 
       <!-- Preview table and column renaming/dropping -->
       <section class="section">
-        <h3>Preview & Rename Columns</h3>
-        <p class="help-text">
-          Click on a column header to toggle its inclusion (red indicates that the column will be dropped).
-          Edit the column name if needed.
-        </p>
+        <h3>Preview & Drop & Rename Columns</h3>
         <div class="table-wrapper">
           <table id="previewTable">
             <thead id="previewHead"></thead>
@@ -78,12 +82,18 @@
       </section>
     </div>
 
-<!-- Side Panel for Logs -->
-<aside id="logsPanel" class="side-panel">
-
-  <h2>API Logs</h2>
-  <ul id="logsList"></ul>
-</aside>
+    <!-- Logs Panel -->
+    <div id="logsPanel" class="logs-panel collapsed">
+      <div class="logs-panel-header" onclick="toggleLogs()">
+        <h2>API Logs</h2>
+        <button class="toggle-logs-btn">
+          <i class="fas fa-chevron-up"></i>
+        </button>
+      </div>
+      <div class="logs-content">
+        <ul id="logsList" class="logs-list"></ul>
+      </div>
+    </div>
 
     <script src="/static/upload.js"></script>
     <script src="/static/scripts.js"></script>

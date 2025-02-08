@@ -32,34 +32,34 @@ class DataIngestionService:
         fixed_fields: Dict[str, str] = None
     ) -> Dict[str, int]:
         """Process uploaded file and insert into MongoDB"""
+        start_time = datetime.utcnow()
         try:
             # Save file first
             storage_service = StorageService(self.files_collection)
             file_metadata = storage_service.save_file(file, current_user)
-            
+
             content_type = file.content_type or file.filename.split('.')[-1]
             logger.info(f"Processing file with content type: {content_type}")
-            
+
             # Add file metadata to fixed fields
             if fixed_fields is None:
                 fixed_fields = {}
             fixed_fields['file_source'] = file_metadata['stored_filename']
-            
+
             if content_type in ['application/json', 'json']:
-                return self._process_json_file(file, current_user, column_mappings, included_columns, fixed_fields)
+                result = self._process_json_file(file, current_user, column_mappings, included_columns, fixed_fields)
             elif content_type in ['text/csv', 'application/vnd.ms-excel', 'csv']:
-                return self._process_csv_file(
-                    file, 
-                    current_user, 
-                    column_mappings, 
-                    included_columns, 
-                    fixed_fields
-                )
+                result = self._process_csv_file(file, current_user, column_mappings, included_columns, fixed_fields)
             else:
                 raise ValueError(f"Unsupported file type: {content_type}")
+
+            return result
         except Exception as e:
             logger.error(f"Error processing file: {str(e)}", exc_info=True)
             raise
+        finally:
+            elapsed_time = datetime.utcnow() - start_time
+            logger.info(f"Ingestion completed in {elapsed_time.total_seconds()} seconds")
 
     def _process_json_file(
         self, 
@@ -213,7 +213,10 @@ class DataIngestionService:
                 # Apply column mappings if specified
                 if column_mappings:
                     column_mappings = {int(k): v for k, v in column_mappings.items()}
-                    chunk.columns = [column_mappings.get(i, col) for i, col in enumerate(chunk.columns)]
+                    chunk.columns = [
+                        column_mappings.get(included_columns[i], col)
+                        for i, col in enumerate(chunk.columns)
+                    ]
                 
                 # Convert to records while preserving column names
                 records = json.loads(chunk.to_json(orient='records'))
@@ -265,13 +268,9 @@ class DataIngestionService:
                 'createdAt': current_time,
                 'lastModified': current_time,
                 'created_by': current_user,
-                'updated_by': current_user
             }
             
-            # Add source if not present
-            if 'source' not in processed_record:
-                processed_record['source'] = 'file_import_' + datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
-            
+
             # Add any fixed fields
             if fixed_fields:
                 processed_record.update(fixed_fields)
@@ -323,4 +322,4 @@ class DataIngestionService:
                 if isinstance(cleaned_value, list) and not cleaned_value:  # Skip empty lists
                     continue
                 cleaned_record[key] = cleaned_value
-        return cleaned_record 
+        return cleaned_record

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from ..auth.utils import verify_password, get_user, get_password_hash
 from ..auth.jwt import create_access_token
 from ..database.client import users_collection
@@ -50,7 +50,15 @@ async def login(request: Request):
         user = get_user(username)
         if not user or not verify_password(password, user['password']):
             log_api_call("/login", "POST", username, 401)
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+            # Read the login template and inject an error message
+            with open("templates/login.html", "r", encoding="utf-8") as f:
+                page = f.read()
+            # Replace the placeholder with an error message
+            page = page.replace(
+                '<div id="error-message" style="color: red;"></div>',
+                '<div id="error-message" style="color: red;">Invalid credentials</div>'
+            )
+            return HTMLResponse(content=page, status_code=401)
         
         access_token = create_access_token(data={"sub": username})
         log_api_call("/login", "POST", username)

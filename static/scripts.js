@@ -1,5 +1,13 @@
 // scripts.js
 
+function toggleLogs() {
+  const panel = document.getElementById('logsPanel');
+  const btn = panel.querySelector('.toggle-logs-btn i');
+  panel.classList.toggle('collapsed');
+  btn.classList.toggle('fa-chevron-up');
+  btn.classList.toggle('fa-chevron-down');
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 
   
@@ -11,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const div = document.createElement("div");
         div.classList.add("search-row");
         div.innerHTML = `
-          <input type="text" placeholder="Field" class="field-name" />
+          <input type="text" placeholder="Field" list="availableFields" class="field-name" />
           <input type="text" placeholder="Value" class="field-value" />
           <button class="icon-btn delete-field" onclick="deleteField(this)" title="Remove Field">
             <i class="fas fa-times"></i>

@@ -13,15 +13,11 @@ def init_db():
         db.create_collection("records", validator={
             "$jsonSchema": {
                 "bsonType": "object",
-                "required": ["username", "createdAt", "lastModified"],
+                "required": ["createdAt", "lastModified", "file_source", "created_by"],
                 "properties": {
-                    "source": {
+                    "file_source": {
                         "bsonType": "string",
-                        "description": "source must be a string if present"
-                    },
-                    "username": {
-                        "bsonType": "string",
-                        "description": "username must be a string and is required"
+                        "description": "file_source must be a string and is required"
                     },
                     "createdAt": {
                         "bsonType": "date",
@@ -30,6 +26,10 @@ def init_db():
                     "lastModified": {
                         "bsonType": "date",
                         "description": "lastModified must be a date and is required"
+                    },
+                    "created_by": {
+                        "bsonType": "string",
+                        "description": "created_by must be a string and is required"
                     }
                 },
                 "additionalProperties": True

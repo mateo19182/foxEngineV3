@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <title>Uploaded Files</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles/base.css" />
+    <link rel="stylesheet" href="/static/styles/layout.css" />
+    <link rel="stylesheet" href="/static/styles/components.css" />
+    <link rel="stylesheet" href="/static/styles/utilities.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -13,6 +16,10 @@
   </head>
   <body>
     <nav class="nav-bar">
+        <div class="nav-brand">
+            FoxEngine
+            <span class="nav-title">Files</span>
+        </div>
         <div class="nav-buttons">
             <a href="/" class="icon-btn" title="Home">
                 <i class="fas fa-home"></i>
@@ -28,9 +35,8 @@
             </button>
         </div>
     </nav>
+
     <div class="container">
-      <h1>Uploaded Files</h1>
-      
       <section class="section">
         <div class="table-wrapper">
           <table id="filesTable">
@@ -48,6 +54,19 @@
           </table>
         </div>
       </section>
+    </div>
+
+    <!-- Logs Panel -->
+    <div id="logsPanel" class="logs-panel collapsed">
+      <div class="logs-panel-header" onclick="toggleLogs()">
+        <h2>API Logs</h2>
+        <button class="toggle-logs-btn">
+          <i class="fas fa-chevron-up"></i>
+        </button>
+      </div>
+      <div class="logs-content">
+        <ul id="logsList" class="logs-list"></ul>
+      </div>
     </div>
 
     <!-- File Details Modal -->

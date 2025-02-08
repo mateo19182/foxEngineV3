@@ -8,7 +8,6 @@
 - add zip support
 - validate and clean file properly, save to server b4 writing?
   - don't do _id, mongodb does it automatically, replace on same id or exactly same values
-  - add filename as source by default, allow change
 - Bulk Writes and stream data with batches, disable index during insert
 - use compression, paralelize and MongoDB Write Concern
 - use polars for faster processing
@@ -18,15 +17,19 @@
 - add separator chooser back?
 
 ### Schema/Db
+
 - figure out if present in service, checked and hashed password 
 - figure out how to show record new fields
 - try lots of records
 - fuzzy search and/or regex
+  - Anchoring your regex patterns
 
 
 ### Other
+
 - copy other cool stuff from v1 and v2!
 - improve ui
+  - shadcn
 - optimize docker
 - personlize export
 - pagination, handlebars?
