@@ -5,12 +5,22 @@ document.addEventListener('DOMContentLoaded', function() {
 async function fetchFiles() {
     try {
         console.log('Fetching files...');
-        const response = await fetch('/list_files');
+        const response = await fetch('/api/files/list');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const files = await response.json();
         console.log('Received files:', files);
+        if (!Array.isArray(files)) {
+            throw new Error('Expected array of files from server');
+        }
         renderFilesTable(files);
     } catch (error) {
         console.error('Error fetching files:', error);
+        const tbody = document.getElementById('filesTableBody');
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="error-message">Error loading files: ${error.message}</td></tr>`;
+        }
     }
 }
 
@@ -78,7 +88,7 @@ function showFileDetails(file) {
 
 async function downloadFile(fileId) {
     try {
-        window.location.href = `/files/${fileId}/download`;
+        window.location.href = `/api/files/${fileId}/download`;
     } catch (error) {
         console.error('Error downloading file:', error);
     }
@@ -88,12 +98,12 @@ async function deleteFile(fileId) {
     if (!confirm('Are you sure you want to delete this file?')) return;
     
     try {
-        const response = await fetch(`/files/${fileId}`, {
+        const response = await fetch(`/api/files/${fileId}`, {
             method: 'DELETE'
         });
         
         if (response.ok) {
-            fetchFiles(); // Refresh the table
+            fetchFiles();
         } else {
             alert('Error deleting file');
         }

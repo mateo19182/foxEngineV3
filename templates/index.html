@@ -12,6 +12,8 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <!-- Add Handlebars -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   </head>
   <body>
@@ -20,10 +22,12 @@
             FoxEngine
             <span class="nav-title">Home</span>
         </div>
-        <span id="totalCount" class="nav-count">Total Records: Loading...</span>
         <div class="nav-buttons">
             <a href="/" class="icon-btn" title="Home">
                 <i class="fas fa-home"></i>
+            </a>
+            <a href="/search" class="icon-btn" title="Search">
+                <i class="fas fa-search"></i>
             </a>
             <a href="/files" class="icon-btn" title="View Files">
                 <i class="fas fa-folder-open"></i>
@@ -39,85 +43,72 @@
 
     <div class="container">
       <header class="page-header">
-        <h1 class="page-title">Home</h1>
+        <h1 class="page-title">Welcome to FoxEngine</h1>
       </header>
 
-      <!-- Search/Filter Section -->
       <section class="section">
-        <h1>Search</h1>
-        <div id="searchFields">
-          <div class="search-row">
-            <input type="text" placeholder="Field" list="availableFields" class="field-name" />
-            <input type="text" placeholder="Value" class="field-value" />
+        <div class="quick-stats">
+          <div class="stat-card">
+            <i class="fas fa-database"></i>
+            <div class="stat-content">
+              <span class="stat-value" id="totalCount">Loading...</span>
+              <span class="stat-label">Total Records</span>
+            </div>
           </div>
         </div>
-        <datalist id="availableFields">
-          <option value="username">
-          <option value="email">
-          <option value="age">
-          <option value="city">
-          <option value="active">
-          <option value="source">
-          <option value="tags">
-          <option value="skills">
-        </datalist>
-        <button id="addFieldBtn" class="icon-btn" title="Add Field">
-          <i class="fas fa-plus-circle"></i>
-        </button>
-        <button onclick="doSearch()" class="icon-btn" title="Search">
-          <i class="fas fa-search"></i>
-        </button>
-        <button onclick="doDownload()" class="icon-btn" title="Download CSV">
-          <i class="fas fa-file-download"></i>
-        </button>
-      </section>
 
-      <hr/>
-
-      <!-- Records Table with Pagination -->
-      <section class="section">
-        <h2>Records</h2>
-        <div class="table-wrapper">
-          <table id="resultsTable">
-            <thead id="resultsHead"></thead>
-            <tbody id="resultsBody"></tbody>
-          </table>
+        <div class="quick-actions">
+          <a href="/search" class="action-card">
+            <i class="fas fa-search"></i>
+            <h3>Search Records</h3>
+            <p>Search and manage your data records</p>
+          </a>
+          <a href="/files" class="action-card">
+            <i class="fas fa-folder-open"></i>
+            <h3>View Files</h3>
+            <p>Browse and manage uploaded files</p>
+          </a>
+          <a href="/upload" class="action-card">
+            <i class="fas fa-upload"></i>
+            <h3>Upload Data</h3>
+            <p>Upload new data files to the system</p>
+          </a>
         </div>
       </section>
+    </div>
 
-      <!-- Logs Panel -->
-      <div id="logsPanel" class="logs-panel collapsed">
-        <div class="logs-panel-header" onclick="toggleLogs()">
-          <h2>API Logs</h2>
-          <button class="toggle-logs-btn">
-            <i class="fas fa-chevron-up"></i>
-          </button>
-        </div>
-        <div class="logs-content">
-          <ul id="logsList" class="logs-list"></ul>
-        </div>
+    <!-- Logs Panel -->
+    <div id="logsPanel" class="logs-panel collapsed">
+      <div class="logs-panel-header">
+        <h2>API Logs</h2>
+        <button class="toggle-logs-btn">
+          <i class="fas fa-chevron-up"></i>
+        </button>
+      </div>
+      <div class="logs-content">
+        <ul id="logsList" class="logs-list"></ul>
       </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div class="overlay" id="editOverlay">
-      <div class="modal">
-        <h3>Edit Record</h3>
-        <form id="editForm">
-          <input type="hidden" id="editId" />
-          <div id="editFields"></div>
-        </form>
-        <div class="modal-actions">
-          <button class="icon-btn" onclick="saveEdit()" title="Save">
-            <i class="fas fa-check"></i>
-          </button>
-          <button class="icon-btn" onclick="closeModal()" title="Cancel">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
-    </div>
+    <script src="/static/logs.js"></script>
+    <script>
+      async function fetchTotalCount() {
+        try {
+          const res = await fetch('/api/records/count');
+          const data = await res.json();
+          const countElement = document.getElementById('totalCount');
+          if (countElement) {
+            countElement.textContent = data.total_records;
+          }
+        } catch (err) {
+          console.error('Error fetching total count:', err);
+        }
+      }
 
-    <script src="/static/scripts.js"></script>
+      document.addEventListener('DOMContentLoaded', () => {
+        fetchTotalCount();
+        setInterval(fetchTotalCount, 30000);
+      });
+    </script>
   </body>
 </html>

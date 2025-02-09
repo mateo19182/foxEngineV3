@@ -242,7 +242,7 @@ document.addEventListener("DOMContentLoaded", function() {
     progressText.textContent = "0%";
     showStatus("Uploading...", "info");
 
-    fetch("/upload-file", {
+    fetch("/api/records/upload-file", {
       method: "POST",
       body: formData
     })
@@ -255,7 +255,7 @@ document.addEventListener("DOMContentLoaded", function() {
       showStatus(message, "success");
       
       // Fetch and display recent logs
-      return fetch("/logs?limit=5");
+      return fetch("/api/records/logs?limit=5");
     })
     .then(response => response.json())
     .then(logs => {
@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", function() {
       showStatus("Upload failed: " + error.message, "error");
       
       // Still try to show logs even if upload failed
-      fetch("/logs?limit=5")
+      fetch("/api/records/logs?limit=5")
         .then(response => response.json())
         .then(logs => {
           let logsSection = document.querySelector('.logs-section');

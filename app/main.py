@@ -23,6 +23,6 @@ init_db()
 
 # Include routers
 app.include_router(views.router)
-app.include_router(auth.router, tags=["auth"])
-app.include_router(records.router, tags=["records"])
-app.include_router(files.router, tags=["files"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(records.router, prefix="/api/records", tags=["records"])
+app.include_router(files.router, prefix="/api/files", tags=["files"])

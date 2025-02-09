@@ -6,11 +6,20 @@ router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """Home page with search/edit UI."""
+    """Home page with dashboard."""
     user = await get_current_user(request)
     if not user:
         return RedirectResponse(url="/login")
     with open("templates/index.html", "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
+@router.get("/search", response_class=HTMLResponse)
+async def search_page(request: Request):
+    """Search page with advanced search and record management."""
+    user = await get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    with open("templates/search.html", "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
 @router.get("/upload", response_class=HTMLResponse)

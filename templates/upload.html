@@ -24,6 +24,9 @@
             <a href="/" class="icon-btn" title="Home">
                 <i class="fas fa-home"></i>
             </a>
+            <a href="/search" class="icon-btn" title="Search">
+                <i class="fas fa-search"></i>
+            </a>
             <a href="/files" class="icon-btn" title="View Files">
                 <i class="fas fa-folder-open"></i>
             </a>
@@ -40,21 +43,21 @@
         <h1 class="page-title">Upload</h1>
       </header>
 
-<!-- File selection & progress -->
-<section class="section">
-  <div class="upload-controls">
-    <input type="file" id="fileInput" accept=".csv,.json" />
-    <div class="input-group" id="delimiterGroup" style="display: none;">
-      <label for="delimiterInput">Delimiter:</label>
-      <input type="text" id="delimiterInput" maxlength="1" placeholder="," title="Enter delimiter character" style="width: 30px;" />
-    </div>
-  </div>
-  <div id="uploadStatus"></div>
-  <div id="uploadProgress" class="progress-bar" style="display: none;">
-    <div class="progress-fill"></div>
-    <div class="progress-text">0%</div>
-  </div>
-</section>
+      <!-- File selection & progress -->
+      <section class="section">
+        <div class="upload-controls">
+          <input type="file" id="fileInput" accept=".csv,.json" />
+          <div class="input-group" id="delimiterGroup" style="display: none;">
+            <label for="delimiterInput">Delimiter:</label>
+            <input type="text" id="delimiterInput" maxlength="1" placeholder="," title="Enter delimiter character" style="width: 30px;" />
+          </div>
+        </div>
+        <div id="uploadStatus"></div>
+        <div id="uploadProgress" class="progress-bar" style="display: none;">
+          <div class="progress-fill"></div>
+          <div class="progress-text">0%</div>
+        </div>
+      </section>
 
       <hr/>
 
@@ -84,7 +87,7 @@
 
     <!-- Logs Panel -->
     <div id="logsPanel" class="logs-panel collapsed">
-      <div class="logs-panel-header" onclick="toggleLogs()">
+      <div class="logs-panel-header">
         <h2>API Logs</h2>
         <button class="toggle-logs-btn">
           <i class="fas fa-chevron-up"></i>
@@ -95,6 +98,7 @@
       </div>
     </div>
 
+    <script src="/static/logs.js"></script>
     <script src="/static/upload.js"></script>
     <script src="/static/scripts.js"></script>
     <script>

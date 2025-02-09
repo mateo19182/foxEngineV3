@@ -4,9 +4,11 @@
 
 ### ETL
 
+take file out when upload completed..
+
 - internal server error resistant...
 - add zip support
-- validate and clean file properly, save to server b4 writing?
+- validate and clean file properly
   - don't do _id, mongodb does it automatically, replace on same id or exactly same values
 - Bulk Writes and stream data with batches, disable index during insert
 - use compression, paralelize and MongoDB Write Concern

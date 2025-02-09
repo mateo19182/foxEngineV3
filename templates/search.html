@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Search</title>
+    <link rel="stylesheet" href="/static/styles/base.css" />
+    <link rel="stylesheet" href="/static/styles/layout.css" />
+    <link rel="stylesheet" href="/static/styles/components.css" />
+    <link rel="stylesheet" href="/static/styles/utilities.css" />
+    <!-- Font Awesome CDN for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Add Handlebars -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  </head>
+  <body>
+    <nav class="nav-bar">
+        <div class="nav-brand">
+            FoxEngine
+            <span class="nav-title">Search</span>
+        </div>
+        <span id="totalCount" class="nav-count">Total Records: Loading...</span>
+        <div class="nav-buttons">
+            <a href="/" class="icon-btn" title="Home">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="/search" class="icon-btn" title="Search">
+                <i class="fas fa-search"></i>
+            </a>
+            <a href="/files" class="icon-btn" title="View Files">
+                <i class="fas fa-folder-open"></i>
+            </a>
+            <a href="/upload" class="icon-btn" title="Upload">
+                <i class="fas fa-upload"></i>
+            </a>
+            <button onclick="window.location.href='/logout'" class="icon-btn" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+      <header class="page-header">
+        <h1 class="page-title">Search Records</h1>
+      </header>
+
+      <!-- Search/Filter Section -->
+      <section class="section">
+        <h2>Search Filters</h2>
+        <div id="searchFields">
+          <div class="search-row">
+            <input type="text" placeholder="Field" list="availableFields" class="field-name" />
+            <input type="text" placeholder="Value" class="field-value" />
+          </div>
+        </div>
+        <datalist id="availableFields">
+          <option value="username">
+          <option value="email">
+          <option value="age">
+          <option value="city">
+          <option value="active">
+          <option value="source">
+          <option value="tags">
+          <option value="skills">
+        </datalist>
+        <button id="addFieldBtn" class="icon-btn" title="Add Field">
+          <i class="fas fa-plus-circle"></i>
+        </button>
+        <button onclick="doSearch()" class="icon-btn" title="Search">
+          <i class="fas fa-search"></i>
+        </button>
+        <button onclick="doDownload()" class="icon-btn" title="Download CSV">
+          <i class="fas fa-file-download"></i>
+        </button>
+      </section>
+
+      <hr/>
+
+      <!-- Records Section -->
+      <section class="section">
+        <h2>Results</h2>
+        <div id="recordsContainer">
+          <!-- Loading template will be rendered here -->
+        </div>
+      </section>
+
+      <!-- Handlebars Templates -->
+      <script id="loading-template" type="text/x-handlebars-template">
+        <div class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Loading records...</p>
+        </div>
+      </script>
+
+      <script id="empty-template" type="text/x-handlebars-template">
+        <div class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <p>No records found matching your search criteria</p>
+        </div>
+      </script>
+
+      <!-- Records Template -->
+      <script id="records-template" type="text/x-handlebars-template">
+        <div class="records-grid">
+          {{#each records}}
+            <div class="record-card" data-id="{{_id}}" data-record='{{json this}}' onclick="recordCardClicked(this.dataset.record)">
+              <div class="record-content">
+                {{#with (getPreviewFields this)}}
+                  {{#each this}}
+                    {{#unless (eq @key "_remainingCount")}}
+                      <div class="preview-field">
+                        <span class="field-name">{{@key}}:</span>
+                        <span class="field-value">{{formatValue this}}</span>
+                      </div>
+                    {{/unless}}
+                  {{/each}}
+                  {{#if _remainingCount}}
+                    <div class="more-fields">
+                      <i class="fas fa-ellipsis-h"></i>
+                      {{_remainingCount}} more field{{#unless (eq _remainingCount 1)}}s{{/unless}}
+                    </div>
+                  {{/if}}
+                {{/with}}
+                <div class="record-actions">
+                  <button class="icon-btn view-record" onclick="viewRecord(this); event.stopPropagation();" data-record='{{json this}}' title="View/Edit">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="icon-btn delete-record" onclick="deleteRecord('{{_id}}'); event.stopPropagation();" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      </script>
+
+      <!-- Record Modal Template -->
+      <script id="record-modal-template" type="text/x-handlebars-template">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Record Details</h3>
+            <button class="icon-btn close-modal" onclick="closeModal()" title="Close">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="record-fields">
+            <input type="hidden" id="editId" value="{{_id}}" />
+            {{#each this}}
+              {{#unless (eq @key "_id")}}
+                {{#unless (eq @key "readOnly")}}
+                  {{#unless (isSystemField @key)}}
+                    <div class="record-detail-row">
+                      <div class="field-label">{{@key}}</div>
+                      {{#if ../readOnly}}
+                        <div class="field-value">{{formatValue this}}</div>
+                      {{else}}
+                        <div class="field-value">
+                          <input type="text" name="{{@key}}" value="{{formatValue this}}" class="form-control" />
+                        </div>
+                      {{/if}}
+                    </div>
+                  {{/unless}}
+                {{/unless}}
+              {{/unless}}
+            {{/each}}
+          </div>
+
+          <div class="system-fields">
+            {{#each this}}
+              {{#if (isSystemField @key)}}
+                <div class="system-field-row">
+                  <div class="system-field-label">{{@key}}</div>
+                  <div class="system-field-value">{{formatValue this}}</div>
+                </div>
+              {{/if}}
+            {{/each}}
+          </div>
+
+          {{#unless readOnly}}
+          <div class="modal-actions">
+            <button class="btn btn-primary" onclick="saveEdit()">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+          </div>
+          {{/unless}}
+        </div>
+      </script>
+
+      <!-- Record Modal -->
+      <div class="overlay" id="editOverlay">
+        <div class="modal">
+          <!-- Modal content will be inserted here by template -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs Panel -->
+    <div id="logsPanel" class="logs-panel collapsed">
+      <div class="logs-panel-header">
+        <h2>API Logs</h2>
+        <button class="toggle-logs-btn">
+          <i class="fas fa-chevron-up"></i>
+        </button>
+      </div>
+      <div class="logs-content">
+        <ul id="logsList" class="logs-list"></ul>
+      </div>
+    </div>
+
+    <script src="/static/logs.js"></script>
+    <script src="/static/scripts.js"></script>
+  </body>
+</html> 

@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   mongo:
     image: mongo:latest
@@ -17,7 +16,6 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Add volume for development hot-reload
       - .:/app
       - uploaded_files:/app/uploads
     depends_on:

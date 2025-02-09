@@ -7,7 +7,7 @@ import os
 
 router = APIRouter()
 
-@router.get("/list_files")
+@router.get("/list")
 async def get_files(
     current_user: str = Depends(get_current_user),
     skip: int = 0,
@@ -22,7 +22,7 @@ async def get_files(
         files.append(file)
     return files
 
-@router.get("/files/{file_id}/download")
+@router.get("/{file_id}/download")
 async def download_file(file_id: str, current_user: str = Depends(get_current_user)):
     """Download a file by its ID"""
     file_doc = files_collection.find_one({"_id": ObjectId(file_id)})
@@ -39,7 +39,7 @@ async def download_file(file_id: str, current_user: str = Depends(get_current_us
         media_type=file_doc["content_type"]
     )
 
-@router.delete("/files/{file_id}")
+@router.delete("/{file_id}")
 async def delete_file(file_id: str, current_user: str = Depends(get_current_user)):
     """Delete a file by its ID"""
     file_doc = files_collection.find_one({"_id": ObjectId(file_id)})
