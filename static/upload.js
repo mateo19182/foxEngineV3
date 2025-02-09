@@ -254,70 +254,47 @@ document.addEventListener("DOMContentLoaded", function() {
         ${result.duplicate_count ? `• ${result.duplicate_count} duplicates skipped` : ''}`;
       showStatus(message, "success");
       
-      // Fetch and display recent logs
-      return fetch("/api/records/logs?limit=5");
-    })
-    .then(response => response.json())
-    .then(logs => {
-      // Create and show logs section if it doesn't exist
-      let logsSection = document.querySelector('.logs-section');
-      if (!logsSection) {
-        logsSection = document.createElement('section');
-        logsSection.className = 'section logs-section';
-        document.querySelector('.container').appendChild(logsSection);
-      }
+      // Reset the form
+      resetUploadForm();
       
-      // Display logs
-      logsSection.innerHTML = `
-        <h3>Recent Activity</h3>
-        <div class="logs-container">
-          ${logs.map(log => `
-            <div class="log-entry ${log.status_code >= 400 ? 'error' : 'success'}">
-              <span class="timestamp">${new Date(log.timestamp).toLocaleString()}</span>
-              <span class="endpoint">${log.endpoint}</span>
-              <span class="status">Status: ${log.status_code}</span>
-              ${log.error ? `<span class="error-message">Error: ${log.error}</span>` : ''}
-              ${log.additional_info ? `<span class="info">${log.additional_info}</span>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      `;
+      // Refresh the logs panel
+      if (typeof refreshLogs === 'function') {
+        refreshLogs();
+      }
     })
     .catch(error => {
       showStatus("Upload failed: " + error.message, "error");
       
-      // Still try to show logs even if upload failed
-      fetch("/api/records/logs?limit=5")
-        .then(response => response.json())
-        .then(logs => {
-          let logsSection = document.querySelector('.logs-section');
-          if (!logsSection) {
-            logsSection = document.createElement('section');
-            logsSection.className = 'section logs-section';
-            document.querySelector('.container').appendChild(logsSection);
-          }
-          
-          logsSection.innerHTML = `
-            <h3>Recent Activity</h3>
-            <div class="logs-container">
-              ${logs.map(log => `
-                <div class="log-entry ${log.status_code >= 400 ? 'error' : 'success'}">
-                  <span class="timestamp">${new Date(log.timestamp).toLocaleString()}</span>
-                  <span class="endpoint">${log.endpoint}</span>
-                  <span class="status">Status: ${log.status_code}</span>
-                  ${log.error ? `<span class="error-message">Error: ${log.error}</span>` : ''}
-                  ${log.additional_info ? `<span class="info">${log.additional_info}</span>` : ''}
-                </div>
-              `).join('')}
-            </div>
-          `;
-        });
+      // Refresh logs even if upload failed
+      if (typeof refreshLogs === 'function') {
+        refreshLogs();
+      }
     })
     .finally(() => {
       setTimeout(() => {
         uploadProgress.style.display = "none";
       }, 2000);
     });
+  }
+
+  // Add this new function to reset the form
+  function resetUploadForm() {
+    // Reset file input
+    fileInput.value = '';
+    fileData = null;
+    parsedData = [];
+    headers = [];
+    
+    // Clear preview table
+    previewHead.innerHTML = '';
+    previewBody.innerHTML = '';
+    
+    // Reset fixed fields
+    fixedFieldsContainer.innerHTML = '';
+    
+    // Reset delimiter input and hide it
+    delimiterInput.value = ',';
+    delimiterGroup.style.display = 'none';
   }
 
   // Utility function to display status messages.

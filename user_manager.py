@@ -36,7 +36,7 @@ def add_user(username, password):
     """Add a new user to the database."""
     try:
         response = requests.post(
-            API_URL + "register",
+            API_URL + "api/auth/register",
             params={"username": username, "password": password}
         )
         if response.status_code == 200:
@@ -148,7 +148,7 @@ def add_test_data():
     try:
         # First get JWT token
         response = requests.post(
-            API_URL + "token",
+            API_URL + "api/auth/token",
             data={"username": "admin", "password": "admin"}
         )
         if response.status_code != 200:
@@ -174,7 +174,7 @@ def add_test_data():
                 "columns": columns
             }
             response = requests.post(
-                API_URL + "upload-data",
+                API_URL + "api/upload-data",
                 json=payload,
                 headers=headers
             )
@@ -188,7 +188,7 @@ def add_test_data():
         with open(csv_path, 'r') as f:
             csv_data = f.read()
             response = requests.post(
-                API_URL + "upload-data",
+                API_URL + "api/upload-data",
                 data=csv_data,
                 headers={**headers, "Content-Type": "text/csv"}
             )

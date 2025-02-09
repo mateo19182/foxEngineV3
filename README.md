@@ -4,12 +4,9 @@
 
 ### ETL
 
-take file out when upload completed..
-
 - internal server error resistant...
 - add zip support
 - validate and clean file properly
-  - don't do _id, mongodb does it automatically, replace on same id or exactly same values
 - Bulk Writes and stream data with batches, disable index during insert
 - use compression, paralelize and MongoDB Write Concern
 - use polars for faster processing
@@ -21,7 +18,6 @@ take file out when upload completed..
 ### Schema/Db
 
 - figure out if present in service, checked and hashed password 
-- figure out how to show record new fields
 - try lots of records
 - fuzzy search and/or regex
   - Anchoring your regex patterns
