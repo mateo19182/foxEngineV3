@@ -117,29 +117,31 @@
           {{#each records}}
             <div class="record-card" data-id="{{_id}}" data-record='{{json this}}' onclick="recordCardClicked(this.dataset.record)">
               <div class="record-content">
-                {{#with (getPreviewFields this)}}
-                  {{#each this}}
-                    {{#unless (eq @key "_remainingCount")}}
-                      <div class="preview-field">
-                        <span class="field-name">{{@key}}:</span>
-                        <span class="field-value">{{formatValue this}}</span>
-                      </div>
-                    {{/unless}}
-                  {{/each}}
-                  {{#if _remainingCount}}
-                    <div class="more-fields">
-                      <i class="fas fa-ellipsis-h"></i>
-                      {{_remainingCount}} more field{{#unless (eq _remainingCount 1)}}s{{/unless}}
+                {{#each (getPreviewFields this)}}
+                  {{#unless (eq @key "_remainingCount")}}
+                    <div class="preview-field">
+                      <span class="field-name">{{@key}}:</span>
+                      <span class="field-value">{{formatValue this}}</span>
                     </div>
-                  {{/if}}
-                {{/with}}
-                <div class="record-actions">
-                  <button class="icon-btn view-record" onclick="viewRecord(this); event.stopPropagation();" data-record='{{json this}}' title="View/Edit">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="icon-btn delete-record" onclick="deleteRecord('{{_id}}'); event.stopPropagation();" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
+                  {{/unless}}
+                {{/each}}
+                <div class="record-footer">
+                  {{#with (getPreviewFields this) as |preview|}}
+                    {{#if preview._remainingCount}}
+                      <div class="more-fields">
+                        <i class="fas fa-ellipsis-h"></i>
+                        {{preview._remainingCount}} more field{{#unless (eq preview._remainingCount 1)}}s{{/unless}}
+                      </div>
+                    {{/if}}
+                  {{/with}}
+                  <div class="record-actions">
+                    <button class="icon-btn view-record" onclick="viewRecord(this); event.stopPropagation();" data-record='{{json this}}' title="View/Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="icon-btn delete-record" onclick="deleteRecord('{{_id}}'); event.stopPropagation();" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -152,49 +154,57 @@
         <div class="modal-content">
           <div class="modal-header">
             <h3>Record Details</h3>
-            <button class="icon-btn close-modal" onclick="closeModal()" title="Close">
-              <i class="fas fa-times"></i>
-            </button>
+            <div class="modal-header-right">
+               <button class="icon-btn modal-action-btn" onclick="viewRecord(this); event.stopPropagation();" data-record='{{json this}}' title="Edit">
+                 <i class="fas fa-edit"></i>
+               </button>
+               <button class="icon-btn modal-action-btn" onclick="deleteRecord('{{_id}}'); event.stopPropagation();" title="Delete">
+                 <i class="fas fa-trash"></i>
+               </button>
+               <button class="icon-btn close-modal" onclick="closeModal()" title="Close">
+                 <i class="fas fa-times"></i>
+               </button>
+            </div>
           </div>
-          <div class="record-fields">
-            <input type="hidden" id="editId" value="{{_id}}" />
-            {{#each this}}
-              {{#unless (eq @key "_id")}}
-                {{#unless (eq @key "readOnly")}}
-                  {{#unless (isSystemField @key)}}
-                    <div class="record-detail-row">
-                      <div class="field-label">{{@key}}</div>
-                      {{#if ../readOnly}}
-                        <div class="field-value">{{formatValue this}}</div>
-                      {{else}}
-                        <div class="field-value">
-                          <input type="text" name="{{@key}}" value="{{formatValue this}}" class="form-control" />
-                        </div>
-                      {{/if}}
-                    </div>
+          <div class="record-detail-container">
+            <div class="record-fields">
+              <input type="hidden" id="editId" value="{{_id}}" />
+              {{#each this}}
+                {{#unless (eq @key "_id")}}
+                  {{#unless (eq @key "readOnly")}}
+                    {{#unless (isSystemField @key)}}
+                      <div class="record-detail-row">
+                        <div class="field-label">{{@key}}</div>
+                        {{#if ../readOnly}}
+                          <div class="field-value">{{formatValue this}}</div>
+                        {{else}}
+                          <div class="field-value">
+                            <input type="text" name="{{@key}}" value="{{formatValue this}}" class="form-control" />
+                          </div>
+                        {{/if}}
+                      </div>
+                    {{/unless}}
                   {{/unless}}
                 {{/unless}}
-              {{/unless}}
-            {{/each}}
+              {{/each}}
+            </div>
+            <div class="system-fields">
+              {{#each this}}
+                {{#if (isSystemField @key)}}
+                  <div class="system-field-row">
+                    <div class="system-field-label">{{@key}}</div>
+                    <div class="system-field-value">{{formatValue this}}</div>
+                  </div>
+                {{/if}}
+              {{/each}}
+            </div>
           </div>
-
-          <div class="system-fields">
-            {{#each this}}
-              {{#if (isSystemField @key)}}
-                <div class="system-field-row">
-                  <div class="system-field-label">{{@key}}</div>
-                  <div class="system-field-value">{{formatValue this}}</div>
-                </div>
-              {{/if}}
-            {{/each}}
-          </div>
-
           {{#unless readOnly}}
-          <div class="modal-actions">
-            <button class="btn btn-primary" onclick="saveEdit()">
-              <i class="fas fa-save"></i> Save Changes
-            </button>
-          </div>
+            <div class="modal-actions">
+              <button class="btn btn-primary" onclick="saveEdit()">
+                <i class="fas fa-save"></i> Save Changes
+              </button>
+            </div>
           {{/unless}}
         </div>
       </script>

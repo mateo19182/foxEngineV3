@@ -11,7 +11,7 @@ Handlebars.registerHelper('formatValue', function(value) {
 });
 
 Handlebars.registerHelper('isSystemField', function(fieldName) {
-  const systemFields = ['createdAt', 'lastModified', 'created_by', 'file_source'];
+  const systemFields = ['_id', 'createdAt', 'lastModified', 'created_by', 'file_source'];
   return systemFields.includes(fieldName);
 });
 

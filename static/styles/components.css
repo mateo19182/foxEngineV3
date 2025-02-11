@@ -61,94 +61,150 @@ td {
   border-radius: var(--border-radius);
   padding: 0;
   width: 90%;
-  max-width: 600px;
+  max-width: 800px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--color-border);
+  animation: modalSlideIn 0.3s ease;
 }
 
-.modal-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  max-height: 85vh;
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .modal-header {
-  flex: 0 0 auto;
+  background: var(--color-bg-tertiary);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 2px solid var(--color-border);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg-secondary);
+  justify-content: space-between;
 }
 
 .modal-header h3 {
+  font-size: 1.4rem;
   margin: 0;
-  color: var(--color-text-light);
+  color: var(--color-accent);
+  letter-spacing: 0.5px;
 }
 
 .record-fields {
-  flex: 1 1 auto;
+  flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-md);
-  display: flex;
-  flex-direction: column;
+  padding: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: var(--spacing-md);
-  min-height: 0;
+  background: var(--color-bg-secondary);
 }
 
 .record-detail-row {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-tertiary);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.record-detail-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .field-label {
-  min-width: 150px;
-  flex: 0 0 30%;
-  color: var(--color-text-light);
-  font-weight: 500;
+  color: var(--color-accent);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-xs);
 }
 
 .field-value {
-  flex: 1;
-  max-width: 70%;
+  color: var(--color-text-light);
+  font-size: 1.1rem;
 }
 
 .field-value input.form-control {
   width: 100%;
-  box-sizing: border-box;
+  padding: var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-light);
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.field-value input.form-control:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.system-fields {
+  background: var(--color-bg-tertiary);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.system-field-row {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.system-field-label {
+  color: var(--color-text-light);
+  opacity: 0.7;
+  width: 150px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.system-field-value {
+  font-family: monospace;
+  color: var(--color-accent);
+  opacity: 0.9;
 }
 
 .modal-actions {
-  flex: 0 0 auto;
-  padding: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-tertiary);
   border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-md);
-  background: var(--color-bg-tertiary);
 }
 
 .btn-primary {
   background: var(--color-primary);
   color: var(--color-text-light);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--border-radius);
-  font-size: 0.95rem;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
   background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Forms */
@@ -400,12 +456,31 @@ td {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   padding: var(--spacing-md);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.record-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--color-accent);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
 }
 
 .record-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.record-card:hover::before {
+  transform: translateX(0);
 }
 
 .record-content {
@@ -418,132 +493,84 @@ td {
   display: flex;
   align-items: baseline;
   gap: var(--spacing-sm);
-  padding: var(--spacing-xs) 0;
+  padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.95rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.preview-field:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .preview-field .field-name {
-  color: var(--color-text-light);
+  color: var(--color-accent);
   font-weight: 500;
   flex: 0 0 35%;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .preview-field .field-value {
   flex: 1;
   word-break: break-word;
+  color: var(--color-text-light);
+}
+
+.record-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-xs);
+}
+
+.record-footer .record-actions {
+  display: flex;
+  gap: var(--spacing-xs);
 }
 
 .record-actions {
+  position: absolute;
+  bottom: var(--spacing-xs);
+  right: var(--spacing-xs);
   display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--color-border);
+  flex-direction: row;
+  gap: var(--spacing-xs);
 }
 
-.record-field {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--spacing-xs) 0;
+.record-actions .icon-btn {
+  width: 28px;
+  height: 28px;
   font-size: 0.9rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.field-name {
-  color: var(--color-text-light);
-  font-weight: 500;
-  flex: 0 0 40%;
-}
-
-.field-value {
-  flex: 0 0 55%;
-  text-align: right;
-  word-break: break-word;
-}
-
-/* Loading State */
-.loading-state {
-  text-align: center;
-  padding: var(--spacing-lg);
-  color: var(--color-text-light);
-}
-
-.loading-state i {
-  font-size: 2rem;
-  margin-bottom: var(--spacing-sm);
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: var(--spacing-lg);
-  color: var(--color-text-light);
-  background: var(--color-bg-secondary);
-  border-radius: var(--border-radius);
-  margin-top: var(--spacing-md);
-}
-
-.empty-state i {
-  font-size: 3rem;
-  margin-bottom: var(--spacing-md);
-  opacity: 0.5;
-}
-
-.system-fields {
-  flex: 0 0 auto;
-  padding: var(--spacing-md);
-  background: var(--color-bg-tertiary);
-  border-top: 1px solid var(--color-border);
-}
-
-.system-fields h4 {
-  margin: 0 0 var(--spacing-md) 0;
-  color: var(--color-text-light);
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.8;
-}
-
-.system-field-row {
+  padding: 0;
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-xs) 0;
-  font-size: 0.9rem;
-  opacity: 0.8;
+  justify-content: center;
 }
 
-.system-field-label {
-  min-width: 150px;
-  flex: 0 0 30%;
-  color: var(--color-text-light);
-  font-weight: 500;
-}
-
-.system-field-value {
-  flex: 1;
-  color: var(--color-text);
-  font-family: monospace;
+.record-actions .icon-btn:hover {
+  transform: none;
 }
 
 .more-fields {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-xs) 0;
+  padding: var(--spacing-xs) var(--spacing-sm);
   color: var(--color-text-light);
   font-size: 0.9rem;
   opacity: 0.7;
   font-style: italic;
   border-top: 1px dashed var(--color-border);
   margin-top: var(--spacing-xs);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
 .more-fields i {
   font-size: 0.8rem;
+  color: var(--color-accent);
 }
 
 /* Quick Stats */
@@ -667,4 +694,105 @@ td {
   min-width: 100px;
   text-align: center;
   color: var(--color-text-light);
+}
+
+.field-name {
+  color: var(--color-text-light);
+  font-weight: 500;
+  flex: 0 0 40%;
+}
+
+.field-value {
+  flex: 0 0 55%;
+  text-align: right;
+  word-break: break-word;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--color-text-light);
+}
+
+.loading-state i {
+  font-size: 2rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--color-text-light);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius);
+  margin-top: var(--spacing-md);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+  opacity: 0.5;
+}
+
+/* ------------------------------ */
+/* RECORD DETAIL / MODAL MODIFICATIONS */
+/* ------------------------------ */
+
+/* Adjust the modal header so we can add action icons next to the title */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* A new container for edit/delete actions in the modal header */
+.modal-header-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+/* Style for the modal header action buttons */
+.modal-header-actions .icon-btn {
+  width: 28px;
+  height: 28px;
+  font-size: 1rem;
+  padding: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Wrap the record-fields and system-fields in a scrollable container */
+.record-detail-container {
+  overflow-y: auto;
+  max-height: calc(85vh - 100px);  /* Adjust based on header/footer heights */
+  padding: var(--spacing-md);
+}
+
+/* Ensure the modal content uses a flex layout (if not already) */
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+/* Keep modal actions at the bottom */
+.modal-actions {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-tertiary);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+}
+
+/* ------------------------------ */
+/* MODAL HEADER RIGHT */
+/* ------------------------------ */
+.modal-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 } 
