@@ -795,4 +795,10 @@ td {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+}
+
+/* Restrict the width of text fields in the modal edit form */
+.modal .record-fields .field-value input.form-control {
+    width: auto;
+    max-width: 250px; /* Adjust this value as needed */
 } 

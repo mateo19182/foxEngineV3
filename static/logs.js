@@ -2,7 +2,7 @@
 const logs = {
   async update() {
     try {
-      const response = await fetch('/api/records/logs?limit=50');
+      const response = await fetch('/api/records/logs?limit=48');
       const logs = await response.json();
       const logsList = document.getElementById('logsList');
       

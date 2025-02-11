@@ -160,11 +160,8 @@ class DataIngestionService:
                 )
                 
                 for col in sample_data.columns:
-                    # Check if any value in the column contains commas within quotes
-                    if sample_data[col].astype(str).str.contains('"[^"]*,[^"]*"').any():
-                        array_fields.append(col)
-                    # Also check for typical array field names
-                    elif any(keyword in col.lower() for keyword in ['tags', 'skills', 'categories', 'list']):
+                    # Check if any cell in this column is quoted and contains the custom '█' separator.
+                    if sample_data[col].astype(str).str.contains(r'"[^"]*█[^"]*"', regex=True).any():
                         array_fields.append(col)
                 
                 logger.info(f"Detected array fields: {array_fields}")
@@ -176,15 +173,20 @@ class DataIngestionService:
             # Reset file pointer
             csv_file.seek(0)
             
-            # Custom converter for array fields
+            # Custom converter for array fields that uses the '█' separator
             def convert_array_field(value):
                 if pd.isna(value):
                     return None
                 if isinstance(value, str):
-                    # Remove outer quotes if present
-                    value = value.strip('"\'')
-                    # Split by comma, handling quoted values
-                    return [item.strip().strip('"\'') for item in value.split(',') if item.strip()]
+                    value = value.strip()
+                    if value.startswith('"') and value.endswith('"'):
+                        # Remove outer quotes and trim the inner content
+                        inner_value = value[1:-1].strip()
+                        # Split by the custom '█' separator if present
+                        if "█" in inner_value:
+                            return [item.strip() for item in inner_value.split("█") if item.strip()]
+                        return inner_value
+                    return value
                 return value
 
             converters = {field: convert_array_field for field in array_fields}
@@ -192,7 +194,7 @@ class DataIngestionService:
             # Read CSV in chunks with proper handling of quoted fields
             chunks = pd.read_csv(
                 csv_file,
-                chunksize=1000,
+                chunksize=CHUNK_SIZE,
                 sep=delimiter,
                 quoting=csv.QUOTE_MINIMAL,
                 doublequote=True,
@@ -272,7 +274,6 @@ class DataIngestionService:
                 'created_by': current_user,
             }
             
-
             # Add any fixed fields
             if fixed_fields:
                 processed_record.update(fixed_fields)

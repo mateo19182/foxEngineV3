@@ -3,3 +3,4 @@ env
 keyfile
 __pycache__
 app/data/*
+generated_data/*

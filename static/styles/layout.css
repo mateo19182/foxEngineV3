@@ -132,4 +132,9 @@
   .logs-panel {
     height: 150px;
   }
+}
+
+.nav-logo {
+  height: 40px;       /* Adjust height as needed */
+  margin-right: 10px; /* Adjust margin to create proper spacing */
 } 

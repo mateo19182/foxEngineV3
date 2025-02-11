@@ -4,16 +4,17 @@
 
 ### ETL
 
-- internal server error resistant...
-- add zip support
+- internal server error resistant, stress test uploadss
+- add zip support for uloads
+  - compress files bigger than x Mb
 - validate and clean file properly
-- Bulk Writes and stream data with batches, disable index during insert
-- use compression, paralelize and MongoDB Write Concern
-- use polars for faster processing
-- ingest script
+- optimize import
+  - on load big files web gets stuck
+  - Bulk Writes and stream data with batches, disable index during insert
+  - use compression, paralelize and MongoDB Write Concern
+  - use polars for faster processing
+  - is async better? motor
 - breakdown better results of import
-- is async better? motor
-- compress files bigger than x Mb
 
 ### Schema/Db
 
@@ -22,7 +23,15 @@
 - fuzzy search and/or regex
   - Anchoring your regex patterns
 - duplicates on same record with one more or less field?
+- update on same _id
+- email // emails // email_address
 
+### Checker
+
+- add as tags instead of full values
+- add file with only emails
+- api endpoint for single
+  - allow for rewind, if endpoint poisoned
 
 ### Other
 

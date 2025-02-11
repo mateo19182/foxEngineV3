@@ -1,6 +1,0 @@
-source,username,email,age,city,active,tags
-test_source_1,test_user_1,test1@example.com,25,New York,true,"tech,startup"
-test_source_2,test_user_2,test2@example.com,30,Los Angeles,false,"finance,business"
-test_source_3,test_user_3,test3@example.com,35,Chicago,true,"marketing,sales"
-test_source_4,test_user_4,test4@example.com,28,Boston,true,"tech,marketing"
-test_source_5,test_user_5,test5@example.com,33,San Francisco,false,"startup,sales" 
