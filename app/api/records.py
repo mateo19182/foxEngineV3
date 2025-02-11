@@ -150,95 +150,134 @@ async def search_records(
     current_user: str = Depends(get_current_user)
 ):
     try:
+        # Build the query
         if not query:
-            # Return all records if no search parameters
-            data = []
-            for doc in collection.find().skip(skip).limit(limit):
-                doc["_id"] = str(doc["_id"])
-                data.append(doc)
-            return data
+            mongo_query = {}
+        else:
+            mongo_query = {}
+            conditions = [cond.strip() for cond in query.split('AND')]
+            
+            for condition in conditions:
+                if ':' in condition:
+                    field, value = condition.split(':', 1)
+                    field = field.strip()
+                    value = value.strip()
 
-        # Parse query string into MongoDB query
-        mongo_query = {}
-        
-        # Split query into individual conditions
-        conditions = [cond.strip() for cond in query.split('AND')]
-        
-        for condition in conditions:
-            # Handle different query operators
-            if ':' in condition:
-                field, value = condition.split(':', 1)
-                field = field.strip()
-                value = value.strip()
+                    # Handle regex queries
+                    if value.startswith('/') and value.endswith('/'):
+                        pattern = value[1:-1]
+                        mongo_query[field] = {'$regex': pattern, '$options': 'i'}
+                    
+                    # Handle numeric comparisons
+                    elif value.startswith('>'):
+                        mongo_query[field] = {'$gt': float(value[1:])}
+                    elif value.startswith('<'):
+                        mongo_query[field] = {'$lt': float(value[1:])}
+                    elif value.startswith('>='):
+                        mongo_query[field] = {'$gte': float(value[2:])}
+                    elif value.startswith('<='):
+                        mongo_query[field] = {'$lte': float(value[2:])}
+                    
+                    # Handle array contains
+                    elif value.startswith('[') and value.endswith(']'):
+                        values = [v.strip() for v in value[1:-1].split(',')]
+                        mongo_query[field] = {'$in': values}
+                    
+                    # Handle boolean values
+                    elif value.lower() in ['true', 'false']:
+                        mongo_query[field] = value.lower() == 'true'
+                    
+                    # Default to case-insensitive partial match
+                    else:
+                        mongo_query[field] = {'$regex': value, '$options': 'i'}
 
-                # Handle regex queries
-                if value.startswith('/') and value.endswith('/'):
-                    pattern = value[1:-1]  # Remove slashes
-                    mongo_query[field] = {'$regex': pattern, '$options': 'i'}
-                
-                # Handle numeric comparisons
-                elif value.startswith('>'):
-                    mongo_query[field] = {'$gt': float(value[1:])}
-                elif value.startswith('<'):
-                    mongo_query[field] = {'$lt': float(value[1:])}
-                elif value.startswith('>='):
-                    mongo_query[field] = {'$gte': float(value[2:])}
-                elif value.startswith('<='):
-                    mongo_query[field] = {'$lte': float(value[2:])}
-                
-                # Handle array contains
-                elif value.startswith('[') and value.endswith(']'):
-                    values = [v.strip() for v in value[1:-1].split(',')]
-                    mongo_query[field] = {'$in': values}
-                
-                # Handle boolean values
-                elif value.lower() in ['true', 'false']:
-                    mongo_query[field] = value.lower() == 'true'
-                
-                # Default to case-insensitive partial match
-                else:
-                    mongo_query[field] = {'$regex': value, '$options': 'i'}
+        # Get total count for the query
+        total_count = collection.count_documents(mongo_query)
 
-        logger.info(f"MongoDB Query: {mongo_query}")  # Use logger instead of print
-
-        # Execute query with pagination
+        # Get paginated results
         data = []
         for doc in collection.find(mongo_query).skip(skip).limit(limit):
             doc["_id"] = str(doc["_id"])
             data.append(doc)
-        return data
+
+        return {
+            "total": total_count,
+            "records": data
+        }
 
     except Exception as e:
-        logger.error(f"Error in search_records: {str(e)}")  # Log the error
+        logger.error(f"Error in search_records: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/download-csv")
-async def download_csv(params: str = "", current_user: str = Depends(get_current_user)):
-    if not params:
-        cursor = collection.find()
-    else:
-        query_dict = {}
-        for p in params.split("&"):
-            if "=" not in p:
-                continue
-            k, v = p.split("=", 1)
-            query_dict[k.strip()] = v.strip()
-        cursor = collection.find(query_dict)
+async def download_csv(
+    query: str = "",
+    current_user: str = Depends(get_current_user)
+):
+    try:
+        # Use the same query parsing logic as search endpoint
+        if not query:
+            mongo_query = {}
+        else:
+            mongo_query = {}
+            conditions = [cond.strip() for cond in query.split('AND')]
+            
+            for condition in conditions:
+                if ':' in condition:
+                    field, value = condition.split(':', 1)
+                    field = field.strip()
+                    value = value.strip()
 
-    rows = list(cursor)
-    df = pd.DataFrame(rows)
-    if not df.empty and "_id" in df.columns:
-        df["_id"] = df["_id"].astype(str)
+                    # Handle regex queries
+                    if value.startswith('/') and value.endswith('/'):
+                        pattern = value[1:-1]
+                        mongo_query[field] = {'$regex': pattern, '$options': 'i'}
+                    
+                    # Handle numeric comparisons
+                    elif value.startswith('>'):
+                        mongo_query[field] = {'$gt': float(value[1:])}
+                    elif value.startswith('<'):
+                        mongo_query[field] = {'$lt': float(value[1:])}
+                    elif value.startswith('>='):
+                        mongo_query[field] = {'$gte': float(value[2:])}
+                    elif value.startswith('<='):
+                        mongo_query[field] = {'$lte': float(value[2:])}
+                    
+                    # Handle array contains
+                    elif value.startswith('[') and value.endswith(']'):
+                        values = [v.strip() for v in value[1:-1].split(',')]
+                        mongo_query[field] = {'$in': values}
+                    
+                    # Handle boolean values
+                    elif value.lower() in ['true', 'false']:
+                        mongo_query[field] = value.lower() == 'true'
+                    
+                    # Default to case-insensitive partial match
+                    else:
+                        mongo_query[field] = {'$regex': value, '$options': 'i'}
 
-    output = io.StringIO()
-    df.to_csv(output, index=False)
-    output.seek(0)
+        cursor = collection.find(mongo_query)
+        rows = list(cursor)
+        df = pd.DataFrame(rows)
+        if not df.empty and "_id" in df.columns:
+            df["_id"] = df["_id"].astype(str)
 
-    return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=records.csv"}
-    )
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+
+        # Generate filename with current datetime
+        current_time = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        filename = f"records_{current_time}.csv"
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        logger.error(f"Error in download_csv: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/count")
 async def count_records():

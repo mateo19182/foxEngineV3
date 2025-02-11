@@ -632,4 +632,39 @@ td {
   margin: 0;
   font-size: 0.9rem;
   opacity: 0.8;
+}
+
+.results-count {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  opacity: 0.8;
+  font-weight: normal;
+  margin-left: var(--spacing-sm);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination button:disabled:hover {
+  transform: none;
+  color: inherit;
+}
+
+.page-info {
+  min-width: 100px;
+  text-align: center;
+  color: var(--color-text-light);
 } 

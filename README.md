@@ -13,7 +13,7 @@
 - ingest script
 - breakdown better results of import
 - is async better? motor
-- add separator chooser back?
+- compress files bigger than x Mb
 
 ### Schema/Db
 
@@ -21,6 +21,7 @@
 - try lots of records
 - fuzzy search and/or regex
   - Anchoring your regex patterns
+- duplicates on same record with one more or less field?
 
 
 ### Other
@@ -29,6 +30,7 @@
 - improve ui
   - shadcn
 - optimize docker
+  -  envs
 - personlize export
 - pagination, handlebars?
 - allow checker to check bd first

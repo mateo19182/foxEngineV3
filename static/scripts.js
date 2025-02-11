@@ -62,42 +62,73 @@ Handlebars.registerHelper('getPreviewFields', function(record) {
 // Initialize templates object
 let templates = {};
 
+// Add these variables at the top of the file
+let currentPage = 1;
+let totalResults = 0;
+const RESULTS_PER_PAGE = 50;
+
 // Search Page Functions
-async function doSearch() {
+async function doSearch(page = 1) {
   const recordsContainer = document.getElementById("recordsContainer");
+  const resultsCount = document.getElementById("searchResultsCount");
+  const prevButton = document.getElementById("prevPage");
+  const nextButton = document.getElementById("nextPage");
+  const pageInfo = document.getElementById("pageInfo");
+  
   if (!recordsContainer) return; // Not on search page
   
+  currentPage = page;
+  const skip = (page - 1) * RESULTS_PER_PAGE;
+  
   recordsContainer.innerHTML = templates.loading();
+  resultsCount.textContent = "";
 
   const params = collectSearchParams();
   try {
-    const url = `/api/records/search?query=${encodeURIComponent(params)}&skip=0&limit=50`;
+    const url = `/api/records/search?query=${encodeURIComponent(params)}&skip=${skip}&limit=${RESULTS_PER_PAGE}`;
     const res = await fetch(url);
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     const data = await res.json();
+    totalResults = data.total;
     
-    if (!data || data.length === 0) {
+    if (!data.records || data.records.length === 0) {
       recordsContainer.innerHTML = templates.empty();
+      resultsCount.textContent = "(0 results)";
+      prevButton.disabled = true;
+      nextButton.disabled = true;
+      pageInfo.textContent = "Page 1";
     } else {
-      recordsContainer.innerHTML = templates.records({ records: data });
+      recordsContainer.innerHTML = templates.records({ records: data.records });
+      const start = skip + 1;
+      const end = Math.min(skip + data.records.length, totalResults);
+      resultsCount.textContent = `(showing ${start}-${end} of ${totalResults} results)`;
+      
+      // Update pagination controls
+      prevButton.disabled = page === 1;
+      nextButton.disabled = end >= totalResults;
+      pageInfo.textContent = `Page ${page}`;
     }
   } catch (err) {
     console.error('Search error:', err);
     recordsContainer.innerHTML = '<div class="error-state">Search failed. Please try again.</div>';
+    resultsCount.textContent = "";
+    prevButton.disabled = true;
+    nextButton.disabled = true;
   }
 }
 
 async function doDownload() {
   const params = collectSearchParams();
   try {
-    const res = await fetch(`/api/records/count?params=${params}`);
+    const url = `/api/records/search?query=${encodeURIComponent(params)}&skip=0&limit=0`;
+    const res = await fetch(url);
     const data = await res.json();
-    const recordCount = data.total_records;
+    const recordCount = data.total;
 
     if (confirm(`You are about to download ${recordCount} records. Do you want to proceed?`)) {
-      window.location.href = `/api/records/download-csv?params=${params}`;
+      window.location.href = `/api/records/download-csv?query=${encodeURIComponent(params)}`;
     }
   } catch (err) {
     console.error('Error fetching record count:', err);
@@ -239,6 +270,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Initial search
       doSearch();
+
+      // Add pagination event listeners
+      const prevButton = document.getElementById("prevPage");
+      const nextButton = document.getElementById("nextPage");
+      
+      if (prevButton && nextButton) {
+        prevButton.addEventListener("click", () => {
+          if (currentPage > 1) {
+            doSearch(currentPage - 1);
+          }
+        });
+        
+        nextButton.addEventListener("click", () => {
+          const maxPages = Math.ceil(totalResults / RESULTS_PER_PAGE);
+          if (currentPage < maxPages) {
+            doSearch(currentPage + 1);
+          }
+        });
+      }
     }
 
     // Fetch total count for pages that need it

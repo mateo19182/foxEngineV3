@@ -81,9 +81,18 @@
 
       <!-- Records Section -->
       <section class="section">
-        <h2>Results</h2>
+        <h2>Results <span id="searchResultsCount" class="results-count"></span></h2>
         <div id="recordsContainer">
           <!-- Loading template will be rendered here -->
+        </div>
+        <div class="pagination">
+          <button id="prevPage" class="icon-btn" title="Previous Page" disabled>
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <span id="pageInfo" class="page-info">Page 1</span>
+          <button id="nextPage" class="icon-btn" title="Next Page" disabled>
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
       </section>
 

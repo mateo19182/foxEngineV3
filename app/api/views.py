@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from ..auth.jwt import get_current_user
+from ..auth.jwt import get_current_user, create_access_token
+from ..auth.utils import get_user, verify_password
+from ..utils.logging import log_api_call
 
 router = APIRouter()
 
@@ -36,6 +38,41 @@ async def login_page():
     """Login page."""
     with open("templates/login.html", "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
+
+@router.post("/login", response_class=HTMLResponse)
+async def login_submit(request: Request):
+    """Process login form submission."""
+    try:
+        form_data = await request.form()
+        username = form_data.get("username")
+        password = form_data.get("password")
+        
+        user = get_user(username)
+        if not user or not verify_password(password, user['password']):
+            log_api_call("/login", "POST", username, 401)
+            with open("templates/login.html", "r", encoding="utf-8") as f:
+                page = f.read()
+            page = page.replace(
+                '<div id="error-message" class="status-message error d-none"></div>',
+                '<div id="error-message" class="status-message error">Invalid username or password</div>'
+            )
+            return HTMLResponse(content=page, status_code=401)
+        
+        access_token = create_access_token(data={"sub": username})
+        log_api_call("/login", "POST", username)
+        
+        response = RedirectResponse(url="/", status_code=303)
+        response.set_cookie(
+            key="access_token",
+            value=f"Bearer {access_token}",
+            httponly=True,
+            secure=False,  # Set to True in production
+            samesite="lax"
+        )
+        return response
+    except Exception as e:
+        log_api_call("/login", "POST", username if 'username' in locals() else 'unknown', 500, str(e))
+        raise
 
 @router.get("/files", response_class=HTMLResponse)
 async def files_page(request: Request):

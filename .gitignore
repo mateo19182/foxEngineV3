@@ -2,3 +2,4 @@ env
 .env
 keyfile
 __pycache__
+app/data/*
