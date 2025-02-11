@@ -65,7 +65,7 @@ let templates = {};
 // Add these variables at the top of the file
 let currentPage = 1;
 let totalResults = 0;
-const RESULTS_PER_PAGE = 50;
+const RESULTS_PER_PAGE = 48;
 
 // Search Page Functions
 async function doSearch(page = 1) {
