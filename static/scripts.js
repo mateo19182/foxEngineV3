@@ -62,7 +62,7 @@ Handlebars.registerHelper('getPreviewFields', function(record) {
 // Initialize templates object
 let templates = {};
 
-// Add these variables at the top of the file
+// Add these variables at the top of the fileººººººººººººººººººººººººººººººººººººººº
 let currentPage = 1;
 let totalResults = 0;
 const RESULTS_PER_PAGE = 48;

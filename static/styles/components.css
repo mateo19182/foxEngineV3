@@ -19,6 +19,25 @@
   color: var(--color-accent);
 }
 
+/* Global Accent Button */
+.btn-accent {
+  background: #d97700; /* darker orange */
+  color: var(--color-text-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.btn-accent:hover {
+  background: #c16700; /* even darker on hover */
+}
+
 /* Tables */
 table {
   width: 100%;
@@ -801,4 +820,4 @@ td {
 .modal .record-fields .field-value input.form-control {
     width: auto;
     max-width: 250px; /* Adjust this value as needed */
-} 
+}

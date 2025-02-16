@@ -47,7 +47,10 @@
       <!-- File selection & progress -->
       <section class="section">
         <div class="upload-controls">
-          <input type="file" id="fileInput" accept=".csv,.json" />
+          <label for="fileInput" class="btn btn-primary" title="Choose File">
+            <i class="fas fa-file-upload"></i> Choose File
+          </label>
+          <input type="file" id="fileInput" accept=".csv,.json" style="display: none;" />
           <div class="input-group" id="delimiterGroup" style="display: none;">
             <label for="delimiterInput">Delimiter:</label>
             <input type="text" id="delimiterInput" maxlength="1" placeholder="," title="Enter delimiter character" style="width: 30px;" />
@@ -80,8 +83,8 @@
             <tbody id="previewBody"></tbody>
           </table>
         </div>
-        <button class="icon-btn" id="uploadBtn" title="Upload to Database">
-          <i class="fas fa-cloud-upload-alt"></i>
+        <button class="btn btn-primary" id="uploadBtn" title="Upload to Database">
+          <i class="fas fa-cloud-upload-alt"></i> Upload to Database
         </button>
       </section>
     </div>

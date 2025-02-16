@@ -4,6 +4,7 @@
 
 ### ETL
 
+- select multivalue fields manually? and separator for it too
 - internal server error resistant, stress test uploadss
 - add zip support for uloads
   - compress files bigger than x Mb
@@ -14,7 +15,7 @@
   - use compression, paralelize and MongoDB Write Concern
   - use polars for faster processing
   - is async better? motor
-- breakdown better results of import
+- breakdown results of import, progress bar on uploads !
 
 ### Schema/Db
 
