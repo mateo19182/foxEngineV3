@@ -12,6 +12,7 @@ from typing import Optional, List
 import logging
 from ..services.ingestion_service import DataIngestionService
 import json
+from bson import ObjectId
 
 router = APIRouter()
 
@@ -163,6 +164,16 @@ async def search_records(
                     field = field.strip()
                     value = value.strip()
 
+                    # Handle _id field specially
+                    if field == '_id':
+                        try:
+                            mongo_query[field] = ObjectId(value)
+                            continue
+                        except:
+                            # If invalid ObjectId, return no results
+                            mongo_query[field] = None
+                            continue
+
                     # Handle regex queries
                     if value.startswith('/') and value.endswith('/'):
                         pattern = value[1:-1]
@@ -194,9 +205,16 @@ async def search_records(
         # Get total count for the query
         total_count = collection.count_documents(mongo_query)
 
-        # Get paginated results
+        # If limit is 0, return only the total count
+        if limit == 0:
+            return {
+                "total": total_count,
+                "records": []
+            }
+
+        # Get paginated results with consistent sorting
         data = []
-        for doc in collection.find(mongo_query).skip(skip).limit(limit):
+        for doc in collection.find(mongo_query).sort("createdAt", -1).skip(skip).limit(limit):
             doc["_id"] = str(doc["_id"])
             data.append(doc)
 
@@ -212,10 +230,12 @@ async def search_records(
 @router.get("/download-csv")
 async def download_csv(
     query: str = "",
+    fields: str = "",
+    limit: int = 0,
     current_user: str = Depends(get_current_user)
 ):
     try:
-        # Use the same query parsing logic as search endpoint
+        # Parse the query string into MongoDB query
         if not query:
             mongo_query = {}
         else:
@@ -227,6 +247,16 @@ async def download_csv(
                     field, value = condition.split(':', 1)
                     field = field.strip()
                     value = value.strip()
+
+                    # Handle _id field specially
+                    if field == '_id':
+                        try:
+                            mongo_query[field] = ObjectId(value)
+                            continue
+                        except:
+                            # If invalid ObjectId, return no results
+                            mongo_query[field] = None
+                            continue
 
                     # Handle regex queries
                     if value.startswith('/') and value.endswith('/'):
@@ -256,11 +286,32 @@ async def download_csv(
                     else:
                         mongo_query[field] = {'$regex': value, '$options': 'i'}
 
-        cursor = collection.find(mongo_query)
+        # Parse fields to export
+        field_list = [f.strip() for f in fields.split(',')] if fields else []
+        projection = {field: 1 for field in field_list} if field_list else None
+        
+        # Add _id field to projection if not explicitly included
+        if projection:
+            projection['_id'] = 1
+
+        # Query MongoDB with limit and consistent sorting
+        cursor = collection.find(mongo_query, projection).sort("createdAt", -1)
+        if limit > 0:
+            cursor = cursor.limit(limit)
+            
         rows = list(cursor)
         df = pd.DataFrame(rows)
-        if not df.empty and "_id" in df.columns:
-            df["_id"] = df["_id"].astype(str)
+        
+        if not df.empty:
+            # Convert ObjectId to string
+            if '_id' in df.columns:
+                df['_id'] = df['_id'].astype(str)
+            
+            # Only include requested fields in the order specified
+            if field_list:
+                # Ensure all requested fields exist (some might be missing in the data)
+                existing_fields = [f for f in field_list if f in df.columns]
+                df = df[existing_fields]
 
         output = io.StringIO()
         df.to_csv(output, index=False)
@@ -307,6 +358,7 @@ async def get_logs(
 def upload_file(
     file: UploadFile = File(...),
     delimiter: str = Form(","),
+    multivalue_separator: str = Form(","),
     column_mappings: str = Form(None),
     included_columns: str = Form(None),
     fixed_fields: str = Form(None),
@@ -346,7 +398,8 @@ def upload_file(
             current_user,
             column_mappings_dict,
             included_columns_list,
-            fixed_fields_dict
+            fixed_fields_dict,
+            multivalue_separator=multivalue_separator
         )
         
         # Calculate dropped columns

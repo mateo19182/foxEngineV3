@@ -36,13 +36,12 @@
 
 ### Other
 
+- personalize export!!
 - copy other cool stuff from v1 and v2!
 - improve ui
   - shadcn
 - optimize docker
   -  envs
-- personlize export
-- pagination, handlebars?
 - allow checker to check bd first
 - add cluster to production
 - llm integration xd

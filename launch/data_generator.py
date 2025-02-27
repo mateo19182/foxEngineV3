@@ -16,8 +16,9 @@ def worker_init():
     random.seed(seed)
 
 class DataGenerator:
-    def __init__(self):
+    def __init__(self, multivalue_separator=","):
         self.output_dir = "generated_data"
+        self.multivalue_separator = multivalue_separator
         os.makedirs(self.output_dir, exist_ok=True)
 
     def generate_user_record(self, record_id):
@@ -72,7 +73,7 @@ class DataGenerator:
     def format_record(self, record):
         """
         Format a record so that:
-          - Multi-valued fields (email, address, phone) are joined using the custom delimiter (█)
+          - Multi-valued fields (email, address, phone) are joined using the specified multivalue separator
             and wrapped in double quotes.
           - Single-valued string fields are cleaned to remove commas (and extra quotes) so they don't
             interfere with the CSV delimiter.
@@ -83,7 +84,7 @@ class DataGenerator:
             if key in multivalued_fields and isinstance(value, list):
                 # Clean each item (remove commas and quotes) before joining.
                 cleaned_items = [item.replace(",", " ").replace('"', '') for item in value]
-                formatted_record[key] = f'"{" █ ".join(cleaned_items)}"'
+                formatted_record[key] = f'"{self.multivalue_separator.join(cleaned_items)}"'
             elif isinstance(value, str):
                 # Remove commas and quotes from single-value strings.
                 formatted_record[key] = value.replace(",", " ").replace('"', '')
@@ -163,16 +164,16 @@ class DataGenerator:
                 unique_records.append(record)
 
         print(f"Writing {len(unique_records)} unique records to JSON: {filename}")
-        formatted_records = [self.format_record(rec) for rec in unique_records]
-
         with open(filepath, 'w', encoding='utf-8') as jsonfile:
-            json.dump({"users": formatted_records}, jsonfile, indent=None)
+            json.dump({"rows": unique_records}, jsonfile, indent=None)
 
         file_size = os.path.getsize(filepath) / (1024 * 1024)  # Size in MB
         print(f"Generated JSON file: {filepath} ({file_size:.2f} MB)")
 
 def main():
-    generator = DataGenerator()
+    # Allow specifying multivalue separator as an environment variable
+    multivalue_separator = os.environ.get("MULTIVALUE_SEPARATOR", ",")
+    generator = DataGenerator(multivalue_separator=multivalue_separator)
 
     # Generate datasets of various sizes.
     sizes = [

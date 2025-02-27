@@ -821,3 +821,92 @@ td {
     width: auto;
     max-width: 250px; /* Adjust this value as needed */
 }
+
+/* Export Modal Styles */
+.export-config {
+  padding: 1rem;
+}
+
+.export-config .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.export-config label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-text-light);
+}
+
+.export-config input[type="number"] {
+  width: 200px;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-light);
+  font-size: 1rem;
+}
+
+.export-config input[type="number"]:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.export-config .input-help {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  opacity: 0.8;
+}
+
+.export-fields {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  background: var(--color-bg-tertiary);
+}
+
+.field-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.field-checkbox:hover {
+  background-color: var(--color-bg-secondary);
+}
+
+.field-checkbox input[type="checkbox"] {
+  margin-right: 0.75rem;
+}
+
+.field-checkbox label {
+  color: var(--color-text-light);
+  margin: 0;
+  cursor: pointer;
+}
+
+.field-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.field-actions .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.search-help {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #666;
+  opacity: 0.8;
+}

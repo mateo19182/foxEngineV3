@@ -43,9 +43,11 @@ def init_db():
         print(f"Collection might already exist: {e}")
 
     # Create indexes
-    collection.create_index([("username", 1)], unique=True)
+    collection.create_index([("username", 1)])
     collection.create_index([("createdAt", 1)])
     collection.create_index([("lastModified", 1)])
+    collection.create_index([("email", 1)])
+
     
     # Create indexes for files collection
     files_collection.create_index([("file_hash", 1)])

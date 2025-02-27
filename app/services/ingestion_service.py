@@ -29,7 +29,8 @@ class DataIngestionService:
         current_user: str,
         column_mappings: Dict[int, str] = None,
         included_columns: List[int] = None,
-        fixed_fields: Dict[str, str] = None
+        fixed_fields: Dict[str, str] = None,
+        multivalue_separator: str = ","  # New parameter for multivalue separator
     ) -> Dict[str, int]:
         """Process uploaded file and insert into MongoDB"""
         start_time = datetime.utcnow()
@@ -49,7 +50,14 @@ class DataIngestionService:
             if content_type in ['application/json', 'json']:
                 result = self._process_json_file(file, current_user, column_mappings, included_columns, fixed_fields)
             elif content_type in ['text/csv', 'application/vnd.ms-excel', 'csv']:
-                result = self._process_csv_file(file, current_user, column_mappings, included_columns, fixed_fields)
+                result = self._process_csv_file(
+                    file, 
+                    current_user, 
+                    column_mappings, 
+                    included_columns, 
+                    fixed_fields,
+                    multivalue_separator=multivalue_separator
+                )
             else:
                 raise ValueError(f"Unsupported file type: {content_type}")
 
@@ -127,7 +135,8 @@ class DataIngestionService:
         column_mappings: Dict[int, str] = None,
         included_columns: List[int] = None,
         fixed_fields: Dict[str, str] = None,
-        delimiter: str = ","
+        delimiter: str = ",",
+        multivalue_separator: str = ","
     ) -> Dict[str, int]:
         content = file.file.read()
         text = content.decode('utf-8')
@@ -147,97 +156,69 @@ class DataIngestionService:
                     escapechar='\\'
                 ).columns.tolist()
                 
-                # Identify potential array fields (fields that might contain lists)
-                array_fields = []
+                # Reset file pointer for data reading
                 csv_file.seek(0)
-                sample_data = pd.read_csv(
+                
+                # Read CSV in chunks with proper handling of quoted fields
+                chunks = pd.read_csv(
                     csv_file,
-                    nrows=5,
+                    chunksize=CHUNK_SIZE,
                     sep=delimiter,
                     quoting=csv.QUOTE_MINIMAL,
                     doublequote=True,
-                    escapechar='\\'
+                    escapechar='\\',
+                    on_bad_lines='warn'
                 )
                 
-                for col in sample_data.columns:
-                    # Check if any cell in this column is quoted and contains the custom '█' separator.
-                    if sample_data[col].astype(str).str.contains(r'"[^"]*█[^"]*"', regex=True).any():
-                        array_fields.append(col)
+                total_inserted = 0
+                total_duplicates = 0
                 
-                logger.info(f"Detected array fields: {array_fields}")
+                for chunk in chunks:
+                    if chunk.empty:
+                        continue
+                        
+                    # Apply column filtering if specified
+                    if included_columns is not None:
+                        chunk = chunk.iloc[:, included_columns]
+                    
+                    # Apply column mappings if specified
+                    if column_mappings:
+                        column_mappings = {int(k): v for k, v in column_mappings.items()}
+                        chunk.columns = [
+                            column_mappings.get(included_columns[i], col)
+                            for i, col in enumerate(chunk.columns)
+                        ]
+                    
+                    # Process potential array fields
+                    for column in chunk.columns:
+                        # Check if any cell in this column contains the multivalue separator
+                        if chunk[column].astype(str).str.contains(f'"{multivalue_separator}"', regex=False).any():
+                            # Convert the string values to arrays using the multivalue separator
+                            chunk[column] = chunk[column].apply(
+                                lambda x: [v.strip() for v in str(x).strip('"').split(multivalue_separator) if v.strip()]
+                                if pd.notna(x) else None
+                            )
+                    
+                    # Convert to records while preserving column names
+                    records = json.loads(chunk.to_json(orient='records'))
+                    records = [record for record in records if any(record.values())]
+                    
+                    # Process the chunk
+                    result = self._process_records(records, current_user, fixed_fields)
+                    total_inserted += result.get('inserted_count', 0)
+                    total_duplicates += result.get('duplicate_count', 0)
+
+                if total_inserted == 0 and total_duplicates == 0:
+                    raise ValueError("No valid records found in CSV")
+
+                return {
+                    "inserted_count": total_inserted,
+                    "duplicate_count": total_duplicates
+                }
                 
             except Exception as e:
-                logger.warning(f"Error in initial header reading: {str(e)}")
+                logger.warning(f"Error in processing CSV: {str(e)}")
                 raise
-            
-            # Reset file pointer
-            csv_file.seek(0)
-            
-            # Custom converter for array fields that uses the '█' separator
-            def convert_array_field(value):
-                if pd.isna(value):
-                    return None
-                if isinstance(value, str):
-                    value = value.strip()
-                    if value.startswith('"') and value.endswith('"'):
-                        # Remove outer quotes and trim the inner content
-                        inner_value = value[1:-1].strip()
-                        # Split by the custom '█' separator if present
-                        if "█" in inner_value:
-                            return [item.strip() for item in inner_value.split("█") if item.strip()]
-                        return inner_value
-                    return value
-                return value
-
-            converters = {field: convert_array_field for field in array_fields}
-            
-            # Read CSV in chunks with proper handling of quoted fields
-            chunks = pd.read_csv(
-                csv_file,
-                chunksize=CHUNK_SIZE,
-                sep=delimiter,
-                quoting=csv.QUOTE_MINIMAL,
-                doublequote=True,
-                escapechar='\\',
-                converters=converters,
-                on_bad_lines='warn'
-            )
-            
-            total_inserted = 0
-            total_duplicates = 0
-            
-            for chunk in chunks:
-                if chunk.empty:
-                    continue
-                    
-                # Apply column filtering if specified
-                if included_columns is not None:
-                    chunk = chunk.iloc[:, included_columns]
-                
-                # Apply column mappings if specified
-                if column_mappings:
-                    column_mappings = {int(k): v for k, v in column_mappings.items()}
-                    chunk.columns = [
-                        column_mappings.get(included_columns[i], col)
-                        for i, col in enumerate(chunk.columns)
-                    ]
-                
-                # Convert to records while preserving column names
-                records = json.loads(chunk.to_json(orient='records'))
-                records = [record for record in records if any(record.values())]
-                
-                # Process the chunk
-                result = self._process_records(records, current_user, fixed_fields)
-                total_inserted += result.get('inserted_count', 0)
-                total_duplicates += result.get('duplicate_count', 0)
-
-            if total_inserted == 0 and total_duplicates == 0:
-                raise ValueError("No valid records found in CSV")
-
-            return {
-                "inserted_count": total_inserted,
-                "duplicate_count": total_duplicates
-            }
             
         except Exception as e:
             logger.error(f"Error processing CSV: {str(e)}")

@@ -146,11 +146,11 @@ function collectSearchParams() {
       const fieldName = nameEl.value.trim();
       const fieldValue = valEl.value.trim();
       if (fieldName && fieldValue) {
-        arr.push(`${encodeURIComponent(fieldName)}:${encodeURIComponent(fieldValue)}`);
+        arr.push(`${fieldName}:${fieldValue}`);
       }
     }
   });
-  return arr.join("&");
+  return arr.join(" AND ");
 }
 
 // Delete Record
@@ -358,5 +358,69 @@ function recordCardClicked(recordJson) {
     overlay.style.display = "flex";
   } catch (err) {
     console.error('Error viewing record details:', err);
+  }
+}
+
+// Export functionality
+let availableFields = [];
+
+function showExportModal() {
+  const overlay = document.getElementById('exportOverlay');
+  const fieldsContainer = document.getElementById('exportFields');
+  
+  // Get all available fields from the datalist
+  const datalist = document.getElementById('availableFields');
+  availableFields = Array.from(datalist.options).map(opt => opt.value);
+  
+  // Create checkboxes for each field
+  fieldsContainer.innerHTML = availableFields.map(field => `
+    <div class="field-checkbox">
+      <input type="checkbox" id="export_${field}" value="${field}" checked>
+      <label for="export_${field}">${field}</label>
+    </div>
+  `).join('');
+  
+  overlay.style.display = 'flex';
+}
+
+function closeExportModal() {
+  const overlay = document.getElementById('exportOverlay');
+  overlay.style.display = 'none';
+}
+
+function selectAllFields(selected) {
+  const checkboxes = document.querySelectorAll('#exportFields input[type="checkbox"]');
+  checkboxes.forEach(cb => cb.checked = selected);
+}
+
+async function doExport() {
+  const limit = parseInt(document.getElementById('exportLimit').value);
+  const selectedFields = Array.from(document.querySelectorAll('#exportFields input[type="checkbox"]:checked'))
+    .map(cb => cb.value);
+    
+  if (selectedFields.length === 0) {
+    alert('Please select at least one field to export.');
+    return;
+  }
+
+  const params = collectSearchParams();
+  try {
+    const url = `/api/records/search?query=${encodeURIComponent(params)}&skip=0&limit=0`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const recordCount = limit > 0 ? Math.min(limit, data.total) : data.total;
+
+    if (confirm(`You are about to download ${recordCount} records. Do you want to proceed?`)) {
+      const exportParams = new URLSearchParams();
+      exportParams.append('query', params);
+      exportParams.append('fields', selectedFields.join(','));
+      exportParams.append('limit', limit.toString());
+      
+      window.location.href = `/api/records/download-csv?${exportParams.toString()}`;
+      closeExportModal();
+    }
+  } catch (err) {
+    console.error('Error preparing export:', err);
+    alert('Failed to prepare export.');
   }
 }

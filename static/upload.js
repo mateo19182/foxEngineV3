@@ -11,26 +11,28 @@ document.addEventListener("DOMContentLoaded", function() {
   const fixedFieldsContainer = document.getElementById("fixedFields");
   const delimiterInput = document.getElementById("delimiterInput");
   const delimiterGroup = document.getElementById("delimiterGroup");
+  const multivalueInput = document.getElementById("multivalueInput");
+  const multivalueGroup = document.getElementById("multivalueGroup");
 
   let fileData = null;
-  let parsedData = [];
+  let parsedData = [];  // Will store the raw parsed data with arrays preserved
   let headers = [];
 
   // Listen for file selection changes
   fileInput.addEventListener("change", function(evt) {
-    const delimiterGroup = document.getElementById("delimiterGroup");
-    
     if (evt.target.files && evt.target.files[0]) {
       fileData = evt.target.files[0];
-      // Show/hide delimiter input based on file type
-      delimiterGroup.style.display = fileData.name.endsWith(".csv") ? "flex" : "none";
+      // Show/hide delimiter and multivalue inputs based on file type
+      const isCSV = fileData.name.endsWith(".csv");
+      delimiterGroup.style.display = isCSV ? "flex" : "none";
+      multivalueGroup.style.display = isCSV ? "flex" : "none";
       
       const reader = new FileReader();
       reader.onload = function(e) {
         const text = e.target.result;
         try {
-          if (fileData.name.endsWith(".csv")) {
-            const delimiter = document.getElementById("delimiterInput").value || ",";
+          if (isCSV) {
+            const delimiter = delimiterInput.value || ",";
             parseCSV(text, delimiter);
           } else if (fileData.name.endsWith(".json")) {
             parseJSON(text);
@@ -44,6 +46,7 @@ document.addEventListener("DOMContentLoaded", function() {
       reader.readAsText(fileData);
     } else {
       delimiterGroup.style.display = "none";
+      multivalueGroup.style.display = "none";
     }
   });
 
@@ -60,6 +63,16 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
+  // Add listener for multivalue separator changes
+  if (multivalueInput) {
+    multivalueInput.addEventListener("input", function() {
+      if (parsedData.length > 0) {
+        // Just update the preview with the new separator
+        renderPreviewTable(headers, parsedData);
+      }
+    });
+  }
+
   // Parse CSV file – first row as header and following rows as data
   function parseCSV(text, delimiter) {
     const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
@@ -68,31 +81,103 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
     }
 
-    // Parse headers using the specified delimiter
-    headers = lines[0].split(delimiter).map(s => s.trim());
+    // Parse headers using the CSV parser
+    headers = parseCSVLine(lines[0], delimiter).map(h => h.trim());
 
-    // Parse data rows with special handling for array fields
+    // Parse data rows and preserve raw quoted values
     parsedData = lines.slice(1).map(line => {
-        const values = [];
-        let currentValue = '';
-        let insideQuotes = false;
-
-        // Parse each character to handle quoted values properly
-        for (let char of line) {
-            if (char === '"') {
-                insideQuotes = !insideQuotes;
-            } else if (char === delimiter && !insideQuotes) {
-                values.push(currentValue.trim());
-                currentValue = '';
-            } else {
-                currentValue += char;
+        const values = parseCSVLine(line, delimiter);
+        
+        // Store raw values, preserving quotes for potential arrays
+        return values.map(val => {
+            if (val && val.startsWith('"') && val.endsWith('"')) {
+                // Store the raw quoted value for later interpretation
+                return {
+                    type: 'quoted',
+                    raw: val.slice(1, -1)  // Remove outer quotes but preserve everything else
+                };
             }
-        }
-        values.push(currentValue.trim());
-        return values;
+            return val;
+        });
     });
 
     renderPreviewTable(headers, parsedData);
+  }
+
+  // Helper function to properly parse CSV lines
+  function parseCSVLine(line, delimiter) {
+    const values = [];
+    let currentValue = '';
+    let insideQuotes = false;
+    let previousChar = '';
+    let i = 0;
+
+    while (i < line.length) {
+        const char = line[i];
+
+        if (char === '"') {
+            if (!insideQuotes) {
+                // Starting a quoted field
+                insideQuotes = true;
+                currentValue += char;  // Keep the quotes in the value
+            } else if (line[i + 1] === '"') {
+                // Escaped quote inside quoted field
+                currentValue += '""';  // Keep escaped quotes as-is
+                i++; // Skip next quote
+            } else {
+                // Ending a quoted field
+                insideQuotes = false;
+                currentValue += char;  // Keep the quotes in the value
+            }
+        } else if (char === delimiter && !insideQuotes) {
+            // End of field
+            values.push(currentValue);
+            currentValue = '';
+        } else {
+            currentValue += char;
+        }
+
+        previousChar = char;
+        i++;
+    }
+
+    // Don't forget the last field
+    values.push(currentValue);
+
+    return values;
+  }
+
+  // Helper function to unescape CSV quoted values
+  function unescapeCSV(str) {
+    return str.replace(/""/g, '"');
+  }
+
+  // Helper function to split string by separator while preserving quoted substrings
+  function splitPreservingQuotes(str, separator) {
+    const parts = [];
+    let currentPart = '';
+    let insideQuotes = false;
+    
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        
+        if (char === '"') {
+            insideQuotes = !insideQuotes;
+            currentPart += char;
+        } else if (char === separator && !insideQuotes) {
+            parts.push(currentPart);
+            currentPart = '';
+        } else {
+            currentPart += char;
+        }
+    }
+    
+    // Add the last part
+    if (currentPart) {
+        parts.push(currentPart);
+    }
+    
+    return parts;
   }
 
   // Parse JSON file – support both direct list of records or an object with "rows"
@@ -104,7 +189,7 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
       }
       headers = Object.keys(data[0]);
-      parsedData = data.map(record => headers.map(h => record[h] || ""));
+      parsedData = data.map(record => headers.map(h => record[h]));
       renderPreviewTable(headers, parsedData);
     } else if (data.rows && Array.isArray(data.rows)) {
       if (data.rows.length === 0) {
@@ -112,14 +197,36 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
       }
       headers = Object.keys(data.rows[0]);
-      parsedData = data.rows.map(record => headers.map(h => record[h] || ""));
+      parsedData = data.rows.map(record => headers.map(h => record[h]));
       renderPreviewTable(headers, parsedData);
     } else {
       showStatus("Unrecognized JSON format.", "error");
     }
   }
 
-  // Render preview table: headers with input for renaming and rows for preview
+  // Helper function to interpret a potentially quoted value based on current separator
+  function interpretValue(value) {
+    if (value && typeof value === 'object' && value.type === 'quoted') {
+        const multiSep = multivalueInput.value || ",";
+        // Check if this is actually a multivalue field
+        const parts = splitPreservingQuotes(value.raw, multiSep);
+        if (parts.length > 1) {
+            return parts.map(p => {
+                // Remove any remaining quotes and unescape
+                p = p.trim();
+                if (p.startsWith('"') && p.endsWith('"')) {
+                    p = p.slice(1, -1);
+                }
+                return unescapeCSV(p);
+            });
+        }
+        // Single value, just unescape it
+        return unescapeCSV(value.raw);
+    }
+    return value;
+  }
+
+  // Render preview table with proper array formatting
   function renderPreviewTable(headers, dataRows) {
     previewHead.innerHTML = "";
     const thRow = document.createElement("tr");
@@ -136,7 +243,6 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
       `;
 
-      // Add change listener to checkbox to toggle column visibility
       const checkbox = th.querySelector('input[type="checkbox"]');
       checkbox.addEventListener('change', function() {
         const columnCells = document.querySelectorAll(`td:nth-child(${index + 1}), th:nth-child(${index + 1})`);
@@ -159,9 +265,15 @@ document.addEventListener("DOMContentLoaded", function() {
     const rowsToShow = Math.min(dataRows.length, 10);
     for (let r = 0; r < rowsToShow; r++) {
       const tr = document.createElement("tr");
-      dataRows[r].forEach(cellValue => {
+      dataRows[r].forEach(value => {
         const td = document.createElement("td");
-        td.textContent = cellValue;
+        // Interpret the value based on current separator settings
+        const interpretedValue = interpretValue(value);
+        if (Array.isArray(interpretedValue)) {
+          td.textContent = interpretedValue.join(multivalueInput.value || ",");
+        } else {
+          td.textContent = interpretedValue || "";
+        }
         tr.appendChild(td);
       });
       previewBody.appendChild(tr);
@@ -231,7 +343,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // Build FormData for POSTing.
     const formData = new FormData();
     formData.append("file", fileData);
-    formData.append("delimiter", document.getElementById("delimiterInput").value || ",");
+    formData.append("delimiter", delimiterInput.value || ",");
+    formData.append("multivalue_separator", multivalueInput.value || ",");
     formData.append("column_mappings", JSON.stringify(columnMappings));
     formData.append("included_columns", JSON.stringify(includedColumns));
     formData.append("fixed_fields", JSON.stringify(fixedFields));
@@ -292,9 +405,11 @@ document.addEventListener("DOMContentLoaded", function() {
     // Reset fixed fields
     fixedFieldsContainer.innerHTML = '';
     
-    // Reset delimiter input and hide it
+    // Reset delimiter and multivalue inputs and hide them
     delimiterInput.value = ',';
+    multivalueInput.value = ',';
     delimiterGroup.style.display = 'none';
+    multivalueGroup.style.display = 'none';
   }
 
   // Utility function to display status messages.

@@ -57,7 +57,11 @@
             <input type="text" placeholder="Value" class="field-value" />
           </div>
         </div>
+        <small class="search-help text-muted">
+          For numeric fields use operators (=, >, <, >=, <=).
+        </small>
         <datalist id="availableFields">
+          <option value="_id">
           <option value="username">
           <option value="email">
           <option value="age">
@@ -73,7 +77,7 @@
         <button onclick="doSearch()" class="icon-btn" title="Search">
           <i class="fas fa-search"></i>
         </button>
-        <button onclick="doDownload()" class="icon-btn" title="Download CSV">
+        <button onclick="showExportModal()" class="icon-btn" title="Export CSV">
           <i class="fas fa-file-download"></i>
         </button>
       </section>
@@ -214,6 +218,49 @@
       <div class="overlay" id="editOverlay">
         <div class="modal">
           <!-- Modal content will be inserted here by template -->
+        </div>
+      </div>
+
+      <!-- Export Modal -->
+      <div class="overlay" id="exportOverlay">
+        <div class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Export Configuration</h3>
+              <button class="icon-btn close-modal" onclick="closeExportModal()" title="Close">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="export-config">
+              <div class="form-group">
+                <label for="exportLimit">Number of Records to Export:</label>
+                <input 
+                  type="number" 
+                  id="exportLimit" 
+                  class="form-control" 
+                  value="0" 
+                  min="0" 
+                  placeholder="0 for all records"
+                >
+                <small class="input-help">Enter 0 to export all records</small>
+              </div>
+              <div class="form-group">
+                <label>Fields to Export:</label>
+                <div id="exportFields" class="export-fields">
+                  <!-- Fields will be populated dynamically -->
+                </div>
+                <div class="field-actions">
+                  <button class="btn btn-primary" onclick="selectAllFields(true)">Select All</button>
+                  <button class="btn btn-primary" onclick="selectAllFields(false)">Deselect All</button>
+                </div>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button class="btn btn-primary" onclick="doExport()">
+                <i class="fas fa-download"></i> Export
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
