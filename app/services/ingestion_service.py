@@ -253,6 +253,7 @@ class DataIngestionService:
                 'createdAt': current_time,
                 'lastModified': current_time,
                 'created_by': current_user,
+                'registered_in': {}
             }
             
             # Add any fixed fields

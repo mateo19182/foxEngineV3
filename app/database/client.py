@@ -7,6 +7,10 @@ db = client["my_database"]
 collection = db["records"]
 users_collection = db["users"]
 files_collection = db["files"]
+
+def get_database():
+    return db
+
 # Initialize collections and indexes
 def init_db():
     try:

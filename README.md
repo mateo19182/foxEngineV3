@@ -2,9 +2,14 @@
 
 ## Todo
 
+### Search
+
+- show all fields in selector
+
 ### ETL
 
-- select multivalue fields manually? and separator for it too
+- new field to all uploads -> registered in
+  - es el q se updatea con la api
 - internal server error resistant, stress test uploadss
 - add zip support for uloads
   - compress files bigger than x Mb
@@ -19,7 +24,7 @@
 
 ### Schema/Db
 
-- figure out if present in service, checked and hashed password 
+- figure out if present in service, checked and hashed password
 - try lots of records
 - fuzzy search and/or regex
   - Anchoring your regex patterns
@@ -29,10 +34,12 @@
 
 ### Checker
 
+- api request
 - add as tags instead of full values
 - add file with only emails
 - api endpoint for single
   - allow for rewind, if endpoint poisoned
+  - db snapshots
 
 ### Other
 
