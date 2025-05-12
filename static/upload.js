@@ -22,10 +22,9 @@ document.addEventListener("DOMContentLoaded", function() {
   fileInput.addEventListener("change", function(evt) {
     if (evt.target.files && evt.target.files[0]) {
       fileData = evt.target.files[0];
-      // Show/hide delimiter and multivalue inputs based on file type
+      // Show/hide delimiter input based on file type
       const isCSV = fileData.name.endsWith(".csv");
       delimiterGroup.style.display = isCSV ? "flex" : "none";
-      multivalueGroup.style.display = isCSV ? "flex" : "none";
       
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -46,7 +45,6 @@ document.addEventListener("DOMContentLoaded", function() {
       reader.readAsText(fileData);
     } else {
       delimiterGroup.style.display = "none";
-      multivalueGroup.style.display = "none";
     }
   });
 
@@ -90,14 +88,13 @@ document.addEventListener("DOMContentLoaded", function() {
         
         // Store raw values, preserving quotes for potential arrays
         return values.map(val => {
-            if (val && val.startsWith('"') && val.endsWith('"')) {
-                // Store the raw quoted value for later interpretation
+            if (val && val.includes(",")) {
                 return {
-                    type: 'quoted',
-                    raw: val.slice(1, -1)  // Remove outer quotes but preserve everything else
+                    type: 'multivalue',
+                    values: val.split(",").map(v => v.trim()).filter(v => v)
                 };
             }
-            return val;
+            return val ? val.trim() : null;
         });
     });
 
@@ -109,75 +106,29 @@ document.addEventListener("DOMContentLoaded", function() {
     const values = [];
     let currentValue = '';
     let insideQuotes = false;
-    let previousChar = '';
-    let i = 0;
-
-    while (i < line.length) {
+    
+    for (let i = 0; i < line.length; i++) {
         const char = line[i];
 
         if (char === '"') {
             if (!insideQuotes) {
-                // Starting a quoted field
                 insideQuotes = true;
-                currentValue += char;  // Keep the quotes in the value
             } else if (line[i + 1] === '"') {
-                // Escaped quote inside quoted field
-                currentValue += '""';  // Keep escaped quotes as-is
+                currentValue += '"';
                 i++; // Skip next quote
             } else {
-                // Ending a quoted field
                 insideQuotes = false;
-                currentValue += char;  // Keep the quotes in the value
             }
         } else if (char === delimiter && !insideQuotes) {
-            // End of field
-            values.push(currentValue);
+            values.push(currentValue.trim());
             currentValue = '';
         } else {
             currentValue += char;
         }
-
-        previousChar = char;
-        i++;
     }
 
-    // Don't forget the last field
-    values.push(currentValue);
-
+    values.push(currentValue.trim());
     return values;
-  }
-
-  // Helper function to unescape CSV quoted values
-  function unescapeCSV(str) {
-    return str.replace(/""/g, '"');
-  }
-
-  // Helper function to split string by separator while preserving quoted substrings
-  function splitPreservingQuotes(str, separator) {
-    const parts = [];
-    let currentPart = '';
-    let insideQuotes = false;
-    
-    for (let i = 0; i < str.length; i++) {
-        const char = str[i];
-        
-        if (char === '"') {
-            insideQuotes = !insideQuotes;
-            currentPart += char;
-        } else if (char === separator && !insideQuotes) {
-            parts.push(currentPart);
-            currentPart = '';
-        } else {
-            currentPart += char;
-        }
-    }
-    
-    // Add the last part
-    if (currentPart) {
-        parts.push(currentPart);
-    }
-    
-    return parts;
   }
 
   // Parse JSON file – support both direct list of records or an object with "rows"
@@ -189,41 +140,41 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
       }
       headers = Object.keys(data[0]);
-      parsedData = data.map(record => headers.map(h => record[h]));
-      renderPreviewTable(headers, parsedData);
+      parsedData = data.map(record => 
+        headers.map(h => {
+          const value = record[h];
+          if (Array.isArray(value)) {
+            return {
+              type: 'multivalue',
+              values: value
+            };
+          }
+          return value;
+        })
+      );
     } else if (data.rows && Array.isArray(data.rows)) {
       if (data.rows.length === 0) {
         showStatus("JSON file contains no rows.", "error");
         return;
       }
       headers = Object.keys(data.rows[0]);
-      parsedData = data.rows.map(record => headers.map(h => record[h]));
-      renderPreviewTable(headers, parsedData);
+      parsedData = data.rows.map(record => 
+        headers.map(h => {
+          const value = record[h];
+          if (Array.isArray(value)) {
+            return {
+              type: 'multivalue',
+              values: value
+            };
+          }
+          return value;
+        })
+      );
     } else {
       showStatus("Unrecognized JSON format.", "error");
     }
-  }
-
-  // Helper function to interpret a potentially quoted value based on current separator
-  function interpretValue(value) {
-    if (value && typeof value === 'object' && value.type === 'quoted') {
-        const multiSep = multivalueInput.value || ",";
-        // Check if this is actually a multivalue field
-        const parts = splitPreservingQuotes(value.raw, multiSep);
-        if (parts.length > 1) {
-            return parts.map(p => {
-                // Remove any remaining quotes and unescape
-                p = p.trim();
-                if (p.startsWith('"') && p.endsWith('"')) {
-                    p = p.slice(1, -1);
-                }
-                return unescapeCSV(p);
-            });
-        }
-        // Single value, just unescape it
-        return unescapeCSV(value.raw);
-    }
-    return value;
+    
+    renderPreviewTable(headers, parsedData);
   }
 
   // Render preview table with proper array formatting
@@ -267,12 +218,11 @@ document.addEventListener("DOMContentLoaded", function() {
       const tr = document.createElement("tr");
       dataRows[r].forEach(value => {
         const td = document.createElement("td");
-        // Interpret the value based on current separator settings
-        const interpretedValue = interpretValue(value);
-        if (Array.isArray(interpretedValue)) {
-          td.textContent = interpretedValue.join(multivalueInput.value || ",");
+        if (value && value.type === 'multivalue') {
+          td.textContent = value.values.join(", ");
+          td.classList.add('multivalue-cell');
         } else {
-          td.textContent = interpretedValue || "";
+          td.textContent = value || "";
         }
         tr.appendChild(td);
       });
@@ -289,13 +239,12 @@ document.addEventListener("DOMContentLoaded", function() {
     fieldDiv.classList.add("fixed-field-row");
     fieldDiv.innerHTML = `
       <input type="text" placeholder="Field Name" class="fixed-field-name" />
-      <input type="text" placeholder="Value" class="fixed-field-value" />
+      <input type="text" placeholder="Value (use commas for multiple values)" class="fixed-field-value" />
       <button type="button" class="icon-btn delete-field" title="Remove Field">
         <i class="fas fa-times"></i>
       </button>
     `;
 
-    // Add click handler directly to the delete button
     const deleteBtn = fieldDiv.querySelector('.delete-field');
     deleteBtn.addEventListener('click', () => fieldDiv.remove());
 
@@ -327,16 +276,18 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
 
-    console.log('Column Mappings:', columnMappings);
-    console.log('Included Columns:', includedColumns);
-
     // Get fixed fields
     const fixedFields = {};
     document.querySelectorAll('.fixed-field-row').forEach(row => {
       const name = row.querySelector('.fixed-field-name').value.trim();
       const value = row.querySelector('.fixed-field-value').value.trim();
       if (name && value) {
-        fixedFields[name] = value;
+        // Handle multivalue fixed fields
+        if (value.includes(',')) {
+          fixedFields[name] = value.split(',').map(v => v.trim()).filter(v => v);
+        } else {
+          fixedFields[name] = value;
+        }
       }
     });
 
@@ -344,53 +295,69 @@ document.addEventListener("DOMContentLoaded", function() {
     const formData = new FormData();
     formData.append("file", fileData);
     formData.append("delimiter", delimiterInput.value || ",");
-    formData.append("multivalue_separator", multivalueInput.value || ",");
     formData.append("column_mappings", JSON.stringify(columnMappings));
     formData.append("included_columns", JSON.stringify(includedColumns));
     formData.append("fixed_fields", JSON.stringify(fixedFields));
 
-    // Show a simple progress indication.
+    // Show progress indication
     uploadProgress.style.display = "block";
     progressFill.style.width = "0%";
     progressText.textContent = "0%";
     showStatus("Uploading...", "info");
 
-    fetch("/api/records/upload-file", {
-      method: "POST",
-      body: formData
-    })
-    .then(response => response.json())
-    .then(result => {
-      // Show success message with details
-      const message = `Upload completed:
-        • ${result.inserted_count} records inserted
-        ${result.duplicate_count ? `• ${result.duplicate_count} duplicates skipped` : ''}`;
-      showStatus(message, "success");
-      
-      // Reset the form
-      resetUploadForm();
-      
-      // Refresh the logs panel
-      if (typeof refreshLogs === 'function') {
-        refreshLogs();
+    // Create and configure XMLHttpRequest
+    const xhr = new XMLHttpRequest();
+    
+    // Upload progress handler
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) {
+        const percentComplete = (e.loaded / e.total) * 100;
+        progressFill.style.width = percentComplete + '%';
+        progressText.textContent = Math.round(percentComplete) + '%';
       }
-    })
-    .catch(error => {
-      showStatus("Upload failed: " + error.message, "error");
-      
-      // Refresh logs even if upload failed
-      if (typeof refreshLogs === 'function') {
-        refreshLogs();
+    };
+
+    // Upload complete handler
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        const result = JSON.parse(xhr.responseText);
+        const message = `Upload completed:
+          • ${result.inserted_count} new records added
+          • ${result.updated_count} records updated`;
+        showStatus(message, "success");
+        progressFill.style.width = "100%";
+        progressText.textContent = "100%";
+        
+        // Reset the form
+        resetUploadForm();
+        
+        // Refresh the logs panel
+        if (typeof refreshLogs === 'function') {
+          refreshLogs();
+        }
+      } else {
+        showStatus("Upload failed: " + xhr.statusText, "error");
       }
-    })
-    .finally(() => {
+      
+      // Hide progress bar after 2 seconds
       setTimeout(() => {
         uploadProgress.style.display = "none";
       }, 2000);
-    });
+    };
+
+    // Error handler
+    xhr.onerror = function() {
+      showStatus("Upload failed: Network error", "error");
+      setTimeout(() => {
+        uploadProgress.style.display = "none";
+      }, 2000);
+    };
+
+    // Send the request
+    xhr.open("POST", "/api/records/upload-file", true);
+    xhr.send(formData);
   }
 
-  // Add this new function to reset the form
   function resetUploadForm() {
     // Reset file input
     fileInput.value = '';
@@ -405,11 +372,9 @@ document.addEventListener("DOMContentLoaded", function() {
     // Reset fixed fields
     fixedFieldsContainer.innerHTML = '';
     
-    // Reset delimiter and multivalue inputs and hide them
+    // Reset delimiter input and hide it
     delimiterInput.value = ',';
-    multivalueInput.value = ',';
     delimiterGroup.style.display = 'none';
-    multivalueGroup.style.display = 'none';
   }
 
   // Utility function to display status messages.

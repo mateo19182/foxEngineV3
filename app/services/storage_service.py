@@ -3,11 +3,12 @@ import shutil
 from datetime import datetime
 from fastapi import UploadFile
 from typing import Optional
-from pymongo.collection import Collection
+from motor.motor_asyncio import AsyncIOMotorCollection
 import hashlib
+import aiofiles
 
 class StorageService:
-    def __init__(self, files_collection: Collection):
+    def __init__(self, files_collection: AsyncIOMotorCollection):
         self.upload_dir = "/app/uploads"
         self.files_collection = files_collection
         self._ensure_upload_dir()
@@ -16,7 +17,7 @@ class StorageService:
         """Ensure upload directory exists"""
         os.makedirs(self.upload_dir, exist_ok=True)
 
-    def save_file(self, file: UploadFile, user: str) -> dict:
+    async def save_file(self, file: UploadFile, user: str) -> dict:
         """Save uploaded file and record metadata"""
         try:
             # Generate unique filename using timestamp and original filename
@@ -26,16 +27,16 @@ class StorageService:
             new_filename = f"{timestamp}_{original_filename}"
             file_path = os.path.join(self.upload_dir, new_filename)
 
-            # Calculate file hash
-            contents = file.file.read()
+            # Calculate file hash and save file
+            contents = await file.read()
             file_hash = hashlib.sha256(contents).hexdigest()
             
-            # Save file
-            with open(file_path, "wb") as f:
-                f.write(contents)
+            # Save file using aiofiles
+            async with aiofiles.open(file_path, "wb") as f:
+                await f.write(contents)
 
             # Reset file position for further processing
-            file.file.seek(0)
+            await file.seek(0)
 
             # Record metadata in MongoDB
             metadata = {
@@ -50,8 +51,8 @@ class StorageService:
                 "extension": extension
             }
 
-            # Use PyMongo's synchronous insert_one
-            result = self.files_collection.insert_one(metadata)
+            # Use Motor's async insert_one
+            result = await self.files_collection.insert_one(metadata)
             metadata['_id'] = str(result.inserted_id)
             return metadata
 

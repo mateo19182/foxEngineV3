@@ -66,9 +66,9 @@ async def upload_data(request: Request, current_user: str = Depends(get_current_
             records.append(rec)
 
         try:
-            res = collection.insert_many(records, ordered=False)
+            res = await collection.insert_many(records, ordered=False)
             inserted_count = len(res.inserted_ids)
-            log_api_call("/upload-data", "POST", current_user, 
+            await log_api_call("/upload-data", "POST", current_user, 
                         additional_info=f"Records inserted: {inserted_count}")
             return {"inserted_count": inserted_count}
         except pymongo.errors.BulkWriteError as bwe:
@@ -76,7 +76,7 @@ async def upload_data(request: Request, current_user: str = Depends(get_current_
             inserted_count = bwe.details.get('nInserted', 0)
             duplicates = len([err for err in bwe.details.get('writeErrors', []) 
                             if err.get('code') == 11000])
-            log_api_call("/upload-data", "POST", current_user, 
+            await log_api_call("/upload-data", "POST", current_user, 
                         status_code=207, 
                         error="Partial success",
                         additional_info=f"Records inserted: {inserted_count}, Duplicates: {duplicates}")
@@ -86,7 +86,7 @@ async def upload_data(request: Request, current_user: str = Depends(get_current_
                 "message": "Some records were duplicates and were skipped"
             }
     except Exception as e:
-        log_api_call("/upload-data", "POST", current_user, 500, str(e))
+        await log_api_call("/upload-data", "POST", current_user, 500, str(e))
         raise
 
 @router.get("/list", summary="List records", 
@@ -97,14 +97,15 @@ async def list_records(
     current_user: str = Depends(get_current_user)
 ):
     try:
+        cursor = collection.find().skip(skip).limit(limit)
         data = []
-        for doc in collection.find().skip(skip).limit(limit):
+        async for doc in cursor:
             doc["_id"] = str(doc["_id"])
             data.append(doc)
-        log_api_call("/list", "GET", current_user)
+        await log_api_call("/list", "GET", current_user)
         return data
     except Exception as e:
-        log_api_call("/list", "GET", current_user, 500, str(e))
+        await log_api_call("/list", "GET", current_user, 500, str(e))
         raise
 
 @router.delete("/record/{record_id}", summary="Delete record",
@@ -114,14 +115,14 @@ async def delete_record(
     current_user: str = Depends(get_current_user)
 ):
     try:
-        res = collection.delete_one({"_id": ObjectId(record_id)})
+        res = await collection.delete_one({"_id": ObjectId(record_id)})
         if res.deleted_count == 0:
-            log_api_call(f"/record/{record_id}", "DELETE", current_user, 404)
+            await log_api_call(f"/record/{record_id}", "DELETE", current_user, 404)
             raise HTTPException(status_code=404, detail="Not found")
-        log_api_call(f"/record/{record_id}", "DELETE", current_user)
+        await log_api_call(f"/record/{record_id}", "DELETE", current_user)
         return {"deleted": True}
     except Exception as e:
-        log_api_call(f"/record/{record_id}", "DELETE", current_user, 500, str(e))
+        await log_api_call(f"/record/{record_id}", "DELETE", current_user, 500, str(e))
         raise
 
 @router.put("/record/{record_id}")
@@ -135,7 +136,7 @@ async def update_record(record_id: str, request: Request, current_user: str = De
     body.pop("username", None)
     body.pop("createdAt", None)
     
-    res = collection.update_one(
+    res = await collection.update_one(
         {"_id": ObjectId(record_id)}, 
         {"$set": body}
     )
@@ -203,7 +204,7 @@ async def search_records(
                         mongo_query[field] = {'$regex': value, '$options': 'i'}
 
         # Get total count for the query
-        total_count = collection.count_documents(mongo_query)
+        total_count = await collection.count_documents(mongo_query)
 
         # If limit is 0, return only the total count
         if limit == 0:
@@ -213,8 +214,9 @@ async def search_records(
             }
 
         # Get paginated results with consistent sorting
+        cursor = collection.find(mongo_query).sort("createdAt", -1).skip(skip).limit(limit)
         data = []
-        for doc in collection.find(mongo_query).sort("createdAt", -1).skip(skip).limit(limit):
+        async for doc in cursor:
             doc["_id"] = str(doc["_id"])
             data.append(doc)
 
@@ -299,14 +301,15 @@ async def download_csv(
         if limit > 0:
             cursor = cursor.limit(limit)
             
-        rows = list(cursor)
+        # Convert cursor to list
+        rows = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            rows.append(doc)
+            
         df = pd.DataFrame(rows)
         
         if not df.empty:
-            # Convert ObjectId to string
-            if '_id' in df.columns:
-                df['_id'] = df['_id'].astype(str)
-            
             # Only include requested fields in the order specified
             if field_list:
                 # Ensure all requested fields exist (some might be missing in the data)
@@ -333,7 +336,7 @@ async def download_csv(
 @router.get("/count")
 async def count_records():
     """Return the total number of records in the collection."""
-    total = collection.count_documents({})
+    total = await collection.count_documents({})
     return {"total_records": total}
 
 @router.get("/logs")
@@ -347,18 +350,18 @@ async def get_logs(
     if status_code:
         query["status_code"] = status_code
     
+    cursor = logs_collection.find(query).sort("timestamp", -1).limit(limit)
     logs = []
-    for log in logs_collection.find(query).sort("timestamp", -1).limit(limit):
+    async for log in cursor:
         log["_id"] = str(log["_id"])
         log["timestamp"] = log["timestamp"].isoformat()
         logs.append(log)
     return logs
 
 @router.post("/upload-file", summary="Upload data file")
-def upload_file(
+async def upload_file(
     file: UploadFile = File(...),
     delimiter: str = Form(","),
-    multivalue_separator: str = Form(","),
     column_mappings: str = Form(None),
     included_columns: str = Form(None),
     fixed_fields: str = Form(None),
@@ -376,8 +379,8 @@ def upload_file(
                 raise HTTPException(status_code=400, detail="included_columns must be a list of integers")
 
         # Read the first line to get total number of columns
-        content = file.file.read()
-        file.file.seek(0)  # Reset file pointer
+        content = await file.read()
+        await file.seek(0)  # Reset file pointer
         
         total_columns = 0
         if file.content_type in ['text/csv', 'application/vnd.ms-excel', 'csv']:
@@ -390,16 +393,15 @@ def upload_file(
             elif isinstance(data, list):
                 total_columns = len(data[0]) if data else 0
         
-        file.file.seek(0)  # Reset file pointer again
+        await file.seek(0)  # Reset file pointer again
 
         ingestion_service = DataIngestionService(collection, files_collection)
-        result = ingestion_service.process_file(
+        result = await ingestion_service.process_file(
             file, 
             current_user,
             column_mappings_dict,
             included_columns_list,
-            fixed_fields_dict,
-            multivalue_separator=multivalue_separator
+            fixed_fields_dict
         )
         
         # Calculate dropped columns
@@ -416,15 +418,18 @@ def upload_file(
         if 'duplicate_count' in result:
             log_message += f", Duplicates: {result['duplicate_count']}"
             
+        if 'updated_count' in result:
+            log_message += f", Updated: {result['updated_count']}"
+            
         if 'error_message' in result:
             log_message += f", Error: {result['error_message']}"
             
         if 'validation_errors' in result:
             log_message += f", Validation errors: {'; '.join(result['validation_errors'])}"
         
-        status_code = 200 if result['inserted_count'] > 0 else 400
+        status_code = 200 if result.get('inserted_count', 0) > 0 or result.get('updated_count', 0) > 0 else 400
         
-        log_api_call(
+        await log_api_call(
             "/upload-file", 
             "POST", 
             current_user,
@@ -445,6 +450,6 @@ def upload_file(
             
         return result
     except Exception as e:
-        log_api_call("/upload-file", "POST", current_user, 500, str(e))
+        await log_api_call("/upload-file", "POST", current_user, 500, str(e))
         raise HTTPException(status_code=500, detail=str(e))
 

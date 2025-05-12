@@ -10,8 +10,9 @@
 
 - new field to all uploads -> registered in
   - es el q se updatea con la api
+- progress bar on server side upload
 - internal server error resistant, stress test uploadss
-- add zip support for uloads
+- add zip support for uploads
   - compress files bigger than x Mb
 - validate and clean file properly
 - optimize import
@@ -20,7 +21,7 @@
   - use compression, paralelize and MongoDB Write Concern
   - use polars for faster processing
   - is async better? motor
-- breakdown results of import, progress bar on uploads !
+- breakdown results of import
 
 ### Schema/Db
 

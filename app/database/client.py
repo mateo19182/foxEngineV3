@@ -1,8 +1,9 @@
-from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.server_api import ServerApi
 from ..config import MONGO_URI
 
-client = MongoClient(MONGO_URI, server_api=ServerApi("1"))
+# Create async client
+client = AsyncIOMotorClient(MONGO_URI, server_api=ServerApi("1"))
 db = client["my_database"]
 collection = db["records"]
 users_collection = db["users"]
@@ -12,9 +13,9 @@ def get_database():
     return db
 
 # Initialize collections and indexes
-def init_db():
+async def init_db():
     try:
-        db.create_collection("records", validator={
+        await db.create_collection("records", validator={
             "$jsonSchema": {
                 "bsonType": "object",
                 "required": ["createdAt", "lastModified", "file_source", "created_by"],
@@ -41,19 +42,18 @@ def init_db():
         })
         
         # Initialize files collection
-        db.create_collection("files")
+        await db.create_collection("files")
         
     except Exception as e:
         print(f"Collection might already exist: {e}")
 
     # Create indexes
-    collection.create_index([("username", 1)])
-    collection.create_index([("createdAt", 1)])
-    collection.create_index([("lastModified", 1)])
-    collection.create_index([("email", 1)])
+    await collection.create_index([("username", 1)])
+    await collection.create_index([("createdAt", 1)])
+    await collection.create_index([("lastModified", 1)])
+    await collection.create_index([("email", 1)], unique=True)
 
-    
     # Create indexes for files collection
-    files_collection.create_index([("file_hash", 1)])
-    files_collection.create_index([("uploaded_by", 1)])
-    files_collection.create_index([("uploaded_at", -1)])
+    await files_collection.create_index([("file_hash", 1)])
+    await files_collection.create_index([("uploaded_by", 1)])
+    await files_collection.create_index([("uploaded_at", -1)])
