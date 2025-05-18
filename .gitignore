@@ -1,8 +1,7 @@
-env
 .env
 keyfile
 __pycache__
 data/*
 launch/generated_data/*.json
 launch/generated_data/*.csv
-Fox-Engine.pdf
+env

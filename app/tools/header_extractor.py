@@ -9,6 +9,15 @@ from collections import defaultdict
 from typing import List, Dict, Any, Optional, Tuple
 from fastapi import UploadFile, HTTPException
 
+import os
+import sys
+import dotenv
+
+# Use relative path to load .env file from project root
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+dotenv.load_dotenv(os.path.join(root_dir, '.env'))
+
+
 logger = logging.getLogger("uvicorn.error")
 
 class HeaderExtractor:
@@ -18,8 +27,7 @@ class HeaderExtractor:
     """
     
     def __init__(self):
-        # Initialize any required components here
-        self.api_key = "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"
+        self.api_key = os.getenv("OPENROUTER_API_KEY")
         self.model = "google/gemini-2.0-flash-001"
     
     def is_numeric(self, value: str) -> bool:
