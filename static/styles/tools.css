@@ -1,0 +1,162 @@
+/* Tools Page Styles */
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.tool-card {
+    background-color: var(--color-bg-secondary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--color-border);
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: var(--color-primary);
+}
+
+.tool-card-header {
+    padding: 1.5rem;
+    background-color: var(--color-bg-tertiary);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+}
+
+.tool-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.tool-card-icon i {
+    font-size: 1.5rem;
+    color: var(--color-text-light);
+}
+
+.tool-card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--color-text-light);
+    font-weight: 600;
+}
+
+.tool-card-body {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.tool-card-description {
+    color: var(--color-text);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    flex-grow: 1;
+}
+
+.tool-card-footer {
+    padding: 0 1.5rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.tool-card-button {
+    background-color: transparent;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.tool-card-button:hover {
+    background-color: var(--color-primary);
+    color: var(--color-text-light);
+}
+
+.tool-card-button i {
+    margin-left: 0.5rem;
+}
+
+.tools-header {
+    margin-bottom: 2rem;
+}
+
+.tools-header h2 {
+    font-size: 1.5rem;
+    color: var(--color-text-light);
+    margin-bottom: 0.5rem;
+}
+
+.tools-header p {
+    color: var(--color-text);
+    max-width: 800px;
+}
+
+.tool-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.badge-new {
+    background-color: var(--color-success);
+    color: var(--color-text-light);
+}
+
+.badge-beta {
+    background-color: var(--color-accent);
+    color: var(--color-text-light);
+}
+
+.no-tools-message {
+    text-align: center;
+    padding: 3rem;
+    background-color: var(--color-bg-tertiary);
+    border-radius: var(--border-radius);
+    margin-top: 2rem;
+}
+
+.no-tools-message i {
+    font-size: 3rem;
+    color: var(--color-border);
+    margin-bottom: 1rem;
+}
+
+.no-tools-message h3 {
+    margin-bottom: 1rem;
+    color: var(--color-text);
+}
+
+.no-tools-message p {
+    color: var(--color-text);
+    max-width: 500px;
+    margin: 0 auto;
+}

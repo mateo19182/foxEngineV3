@@ -1,26 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <meta charset="UTF-8" />
-    <title>Uploaded Files</title>
+    <title>CSV Header Extractor</title>
     <link rel="stylesheet" href="/static/styles/base.css" />
     <link rel="stylesheet" href="/static/styles/layout.css" />
     <link rel="stylesheet" href="/static/styles/components.css" />
     <link rel="stylesheet" href="/static/styles/utilities.css" />
+    <link rel="stylesheet" href="/static/styles/header-extractor.css" />
+    <!-- Font Awesome CDN for Icons -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-      referrerpolicy="no-referrer"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
   </head>
   <body>
     <nav class="nav-bar">
         <div class="nav-brand">
             <img src="/static/images/logo.jpg" alt="FoxEngine Logo" class="nav-logo" />
             FoxEngine
-            <span class="nav-title">Files</span>
+            <span class="nav-title">Header Extractor</span>
         </div>
         <div class="nav-buttons">
             <a href="/" class="icon-btn" title="Home">
@@ -45,21 +45,45 @@
     </nav>
 
     <div class="container">
+      <header class="page-header">
+        <h1 class="page-title">CSV Header Extractor</h1>
+        <p class="page-description">
+          Upload a CSV file without headers and let AI suggest appropriate column headers for your data.
+        </p>
+      </header>
+
       <section class="section">
-        <div class="table-wrapper">
-          <table id="filesTable">
-            <thead>
-              <tr>
-                <th>Original Filename</th>
-                <th>Upload Date</th>
-                <th>Size</th>
-                <th>Type</th>
-                <th>Uploaded By</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="filesTableBody"></tbody>
-          </table>
+        <div class="tool-container">
+          <div class="tool-header">
+            <i class="fas fa-table"></i>
+            <h3>Extract Headers</h3>
+          </div>
+          <p class="tool-description">
+            Upload your CSV file without headers below. The system will analyze the first few rows of your data
+            and suggest appropriate column headers based on the content.
+          </p>
+          
+          <div class="file-input-container" id="fileInputContainer">
+            <div class="file-input-icon">
+              <i class="fas fa-file-csv"></i>
+            </div>
+            <label class="file-input-label">Select CSV File</label>
+            <span id="fileName" class="file-name">No file selected</span>
+            <input type="file" id="csvFile" accept=".csv" />
+          </div>
+          
+          <button id="extractButton" class="extract-button" disabled>
+            <i class="fas fa-magic"></i> Extract Headers
+          </button>
+          
+          <div id="loadingIndicator" class="loading-indicator hidden">
+            <div class="spinner"></div>
+            <span>Analyzing your data...</span>
+          </div>
+          
+          <div id="responseArea" class="response-area hidden">
+            <!-- Results will be displayed here -->
+          </div>
         </div>
       </section>
     </div>
@@ -77,21 +101,7 @@
       </div>
     </div>
 
-    <!-- File Details Modal -->
-    <div class="overlay" id="fileDetailsModal">
-      <div class="modal">
-        <h3>File Details</h3>
-        <div id="fileDetailsContent"></div>
-        <div class="modal-actions">
-          <button class="icon-btn" onclick="closeFileDetailsModal()" title="Close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
     <script src="/static/logs.js"></script>
-    <script src="/static/files.js"></script>
-    <script src="/static/scripts.js"></script>
+    <script src="/static/header-extractor.js"></script>
   </body>
 </html>

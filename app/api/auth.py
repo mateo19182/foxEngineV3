@@ -13,23 +13,24 @@ router = APIRouter()
     description="Register a new user with username and password")
 async def register_user(username: str, password: str):
     try:
-        if users_collection.find_one({"username": username}):
-            log_api_call("/register", "POST", username, 400)
+        existing_user = await users_collection.find_one({"username": username})
+        if existing_user:
+            await log_api_call("/register", "POST", username, 400)
             raise HTTPException(status_code=400, detail="Username already exists")
         
-        users_collection.insert_one({
+        await users_collection.insert_one({
             "username": username,
             "password": get_password_hash(password)
         })
-        log_api_call("/register", "POST", username)
+        await log_api_call("/register", "POST", username)
         return {"message": "User created successfully"}
     except Exception as e:
-        log_api_call("/register", "POST", username, 500, str(e))
+        await log_api_call("/register", "POST", username, 500, str(e))
         raise
 
 @router.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = get_user(form_data.username)
+    user = await get_user(form_data.username)
     if not user or not verify_password(form_data.password, user['password']):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -47,9 +48,9 @@ async def login(request: Request):
         username = form_data.get("username")
         password = form_data.get("password")
         
-        user = get_user(username)
+        user = await get_user(username)
         if not user or not verify_password(password, user['password']):
-            log_api_call("/login", "POST", username, 401)
+            await log_api_call("/login", "POST", username, 401)
             # Read the login template and inject an error message
             with open("templates/login.html", "r", encoding="utf-8") as f:
                 page = f.read()
@@ -61,7 +62,7 @@ async def login(request: Request):
             return HTMLResponse(content=page, status_code=401)
         
         access_token = create_access_token(data={"sub": username})
-        log_api_call("/login", "POST", username)
+        await log_api_call("/login", "POST", username)
         
         response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
         response.set_cookie(
@@ -73,7 +74,7 @@ async def login(request: Request):
         )
         return response
     except Exception as e:
-        log_api_call("/login", "POST", username, 500, str(e))
+        await log_api_call("/login", "POST", username, 500, str(e))
         raise
 
 @router.get("/logout")

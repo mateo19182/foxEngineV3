@@ -8,5 +8,5 @@ def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
-def get_user(username: str):
-    return users_collection.find_one({"username": username})
+async def get_user(username: str):
+    return await users_collection.find_one({"username": username})

@@ -1,26 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <meta charset="UTF-8" />
-    <title>Uploaded Files</title>
+    <title>Tools</title>
     <link rel="stylesheet" href="/static/styles/base.css" />
     <link rel="stylesheet" href="/static/styles/layout.css" />
     <link rel="stylesheet" href="/static/styles/components.css" />
     <link rel="stylesheet" href="/static/styles/utilities.css" />
+    <link rel="stylesheet" href="/static/styles/tools.css" />
+    <!-- Font Awesome CDN for Icons -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-      referrerpolicy="no-referrer"
     />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <!-- Add Handlebars -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   </head>
   <body>
     <nav class="nav-bar">
         <div class="nav-brand">
             <img src="/static/images/logo.jpg" alt="FoxEngine Logo" class="nav-logo" />
             FoxEngine
-            <span class="nav-title">Files</span>
+            <span class="nav-title">Tools</span>
         </div>
         <div class="nav-buttons">
             <a href="/" class="icon-btn" title="Home">
@@ -32,7 +34,7 @@
             <a href="/files" class="icon-btn" title="View Files">
                 <i class="fas fa-folder-open"></i>
             </a>
-            <a href="/tools" class="icon-btn" title="Tools">
+            <a href="/tools" class="icon-btn active" title="Tools">
                 <i class="fas fa-tools"></i>
             </a>
             <a href="/upload" class="icon-btn" title="Upload">
@@ -45,21 +47,37 @@
     </nav>
 
     <div class="container">
+      <header class="page-header">
+        <h1 class="page-title">Useful Tools</h1>
+      </header>
+
       <section class="section">
-        <div class="table-wrapper">
-          <table id="filesTable">
-            <thead>
-              <tr>
-                <th>Original Filename</th>
-                <th>Upload Date</th>
-                <th>Size</th>
-                <th>Type</th>
-                <th>Uploaded By</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="filesTableBody"></tbody>
-          </table>
+        <div class="tools-header">
+          <h2>Available Tools</h2>
+          <p>Access our collection of specialized tools designed to help you work more efficiently with your data.</p>
+        </div>
+        
+        <div class="tools-grid">
+          <!-- CSV Header Extractor Tool -->
+          <a href="/tools/header-extractor" class="tool-card">
+            <div class="tool-card-header">
+              <div class="tool-card-icon">
+                <i class="fas fa-table"></i>
+              </div>
+              <h3 class="tool-card-title">CSV Header Extractor</h3>
+            </div>
+            <div class="tool-card-body">
+              <p class="tool-card-description">Extract meaningful column headers from CSV files without headers using AI. Simply upload your file and get intelligent header suggestions based on your data content.</p>
+              <!-- <div>
+                <span class="tool-badge badge-new">New</span>
+              </div> -->
+            </div>
+            <div class="tool-card-footer">
+              <div class="tool-card-button">
+                Use Tool <i class="fas fa-arrow-right"></i>
+              </div>
+            </div>
+          </a>
         </div>
       </section>
     </div>
@@ -77,21 +95,11 @@
       </div>
     </div>
 
-    <!-- File Details Modal -->
-    <div class="overlay" id="fileDetailsModal">
-      <div class="modal">
-        <h3>File Details</h3>
-        <div id="fileDetailsContent"></div>
-        <div class="modal-actions">
-          <button class="icon-btn" onclick="closeFileDetailsModal()" title="Close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
     <script src="/static/logs.js"></script>
-    <script src="/static/files.js"></script>
-    <script src="/static/scripts.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // Initialize any tool-specific functionality here
+      });
+    </script>
   </body>
 </html>

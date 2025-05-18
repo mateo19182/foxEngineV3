@@ -4,3 +4,6 @@ keyfile
 __pycache__
 app/data/*
 generated_data/*
+launch/generated_data/*.json
+launch/generated_data/*.csv
+Fox-Engine.pdf

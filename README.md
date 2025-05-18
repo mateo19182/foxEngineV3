@@ -6,6 +6,10 @@
 
 - show all fields in selector
 
+
+header extractor
+  get n lines until each field has at least 2 example values..
+
 ### ETL
 
 - new field to all uploads -> registered in
@@ -22,6 +26,7 @@
   - use polars for faster processing
   - is async better? motor
 - breakdown results of import
+- registered in thing check
 
 ### Schema/Db
 
