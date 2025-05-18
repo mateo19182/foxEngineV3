@@ -17,7 +17,7 @@ def worker_init():
 
 class DataGenerator:
     def __init__(self, multivalue_separator=","):
-        self.output_dir = "generated_data"
+        self.output_dir = "data/"
         self.multivalue_separator = multivalue_separator
         os.makedirs(self.output_dir, exist_ok=True)
 
